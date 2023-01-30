@@ -71,6 +71,7 @@
 # MAGIC 
 # MAGIC __Explore data using SQL queries__
 # MAGIC 
+# MAGIC 1. Create test database
 # MAGIC 1. Read file to table
 # MAGIC 1. Query table
 
