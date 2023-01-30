@@ -426,6 +426,13 @@ test_df.write.format("json").save("/tmp/test_df.json")
 
 # COMMAND ----------
 
+# DBTITLE 1,Create test database
+# MAGIC %sql
+# MAGIC 
+# MAGIC CREATE DATABASE IF NOT EXISTS test_db
+
+# COMMAND ----------
+
 # DBTITLE 1,Read file to table
 # MAGIC %sql
 # MAGIC -- mode "FAILFAST" will abort file parsing with a RuntimeException if any malformed lines are encountered
