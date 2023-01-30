@@ -97,7 +97,7 @@ pdf.windspeed.hist()
 # COMMAND ----------
 
 # DBTITLE 1,Pandas dataframe to spark dataframe
-df1 = spark.createDataFrame(pdf.to_spa)
+df1 = spark.createDataFrame(pdf)
 display(df1)
 print(f"count rows:{df1.count()}")
 
@@ -381,12 +381,26 @@ display(query_df)
 
 # COMMAND ----------
 
+df2 = spark.read.json("dbfs:/FileStore/datasets/test_json.json")
+display(df2)
+
+# COMMAND ----------
+
 # DBTITLE 1,Join datasets
-joined_df = df1.join(df2, how="inner", on="id")
 
-unioned_df = df1.union(df2)
+joined_df = df_nested_flattened.join(df2, how="inner", on="a")
+display(joined_df)
 
 
+
+
+# COMMAND ----------
+
+unioned_df = (df_nested_flattened.select("a","b","c")
+              .union(df2.select("a","b","c"))
+              #.distinct()
+             )
+display(unioned_df)
 
 # COMMAND ----------
 
@@ -407,30 +421,6 @@ test_df.write.format("json").save("/tmp/test_df.json")
 
 # COMMAND ----------
 
-"""
-mode (optional): specifies the expected output format of plans.
-  - simple: Print only a physical plan.
-  - extended: Print both logical and physical plans.
-  - codegen: Print a physical plan and generated codes if they are available.
-  - cost: Print a logical plan and statistics if they are available.
-  - formatted: Split explain output into two sections: a physical plan outline and node
-"""
-test_df.explain()
-
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC 
-# MAGIC describe extended test_db.test_df
-
-# COMMAND ----------
-
-# MAGIC %sql 
-# MAGIC explain select * from test_db.test_df
-
-# COMMAND ----------
-
 # MAGIC %md
 # MAGIC ## Explore data using SQL queries
 
@@ -439,12 +429,19 @@ test_df.explain()
 # DBTITLE 1,Read file to table
 # MAGIC %sql
 # MAGIC -- mode "FAILFAST" will abort file parsing with a RuntimeException if any malformed lines are encountered
-# MAGIC CREATE TEMPORARY VIEW diamonds
+# MAGIC --CREATE TEMPORARY VIEW diamonds
+# MAGIC CREATE TABLE IF NOT EXISTS test_db.diamonds
 # MAGIC USING CSV
 # MAGIC OPTIONS (path "/databricks-datasets/Rdatasets/data-001/csv/ggplot2/diamonds.csv", header "true", mode "FAILFAST")
 
 # COMMAND ----------
 
+# MAGIC %sql
+# MAGIC 
+# MAGIC describe extended test_db.diamonds
+
+# COMMAND ----------
+
 # DBTITLE 1,Query table
 # MAGIC %sql 
-# MAGIC SELECT * FROM diamonds
+# MAGIC SELECT * FROM test_db.diamonds
