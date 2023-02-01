@@ -204,7 +204,6 @@ display result
 # MAGIC /*
 # MAGIC Create a new database test_db if it does not exist
 # MAGIC */
-# MAGIC CREATE DATABASE IF NOT EXISTS test_db;
 
 # COMMAND ----------
 
@@ -212,7 +211,7 @@ display result
 """
 Save DataFrame to a new table in database test_db
 """
-df_flatten2.write.option("mergeSchema", "true").mode("overwrite").saveAsTable("test_db.toronto_events_transformed")
+
 
 # COMMAND ----------
 
@@ -220,19 +219,7 @@ df_flatten2.write.option("mergeSchema", "true").mode("overwrite").saveAsTable("t
 """
 Save DataFrame to dbfs location as delta format
 """
-df_flatten2.write.mode("overwrite").format("delta").save("dbfs:/FileStore/datasets/toronto_events_transformed2")
 
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC 
-# MAGIC describe extended test_db.toronto_events_transformed
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC 
-# MAGIC describe extended test_db.toronto_events_transformed2
 
 # COMMAND ----------
 
