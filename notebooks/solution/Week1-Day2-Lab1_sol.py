@@ -319,7 +319,7 @@ df_flatten2.write.mode("overwrite").format("delta").save("dbfs:/FileStore/datase
 
 # MAGIC %sql
 # MAGIC 
-# MAGIC describe extended test_db.toronto_events_transformed2
+# MAGIC describe extended  test_db.toronto_events_transformed2
 
 # COMMAND ----------
 
@@ -346,6 +346,12 @@ df_new_data = (df_flatten2
 df_new_data.createOrReplaceTempView("df_new_data")
 display(df_new_data)
 
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select count(*)
+# MAGIC from test_db.toronto_events_transformed2
 
 # COMMAND ----------
 
@@ -408,9 +414,9 @@ display(df_new_data)
 
 # MAGIC %sql
 # MAGIC -- Count rows for each version
-# MAGIC SELECT 0 as version, count(*) as ct FROM test_db.toronto_events_transformed2 VERSION AS OF 0
+# MAGIC SELECT 3 as version, count(*) as ct FROM test_db.toronto_events_transformed2 VERSION AS OF 3
 # MAGIC UNION ALL
-# MAGIC SELECT 1 as version, count(*) as ct FROM test_db.toronto_events_transformed2 VERSION AS OF 1
+# MAGIC SELECT 4 as version, count(*) as ct FROM test_db.toronto_events_transformed2 VERSION AS OF 4
 
 # COMMAND ----------
 

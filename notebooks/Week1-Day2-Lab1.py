@@ -69,7 +69,7 @@ print(get_all_files_paths())
 
 # DBTITLE 1,Move file to dbfs
 # MAGIC %sh
-# MAGIC mv /local_disk0/spark-23426fb2-714b-40c8-ba99-f611b131b583/userFiles-ab02e600-186f-4db9-94ab-5684575feb1a/edc_eventcal_APR /dbfs/FileStore/datasets/
+# MAGIC mv /local_disk0/spark-c6335ece-7f23-4d2e-8f49-8c2db8f682e6/userFiles-cb5c2d50-cc3a-455e-aa67-1b26ae9dbecf/edc_eventcal_APR /dbfs/FileStore/datasets/
 
 # COMMAND ----------
 
@@ -78,6 +78,14 @@ write code to read the json file that you save to dbfs folder
 1. Count number of rows
 2. Display dataframe schema
 """
+df = spark.read.json("/FileStore/datasets/edc_eventcal_APR")
+
+display(df.count())
+
+
+
+# COMMAND ----------
+
 
 
 # COMMAND ----------
@@ -89,10 +97,10 @@ write code to read the json file that you save to dbfs folder
 # COMMAND ----------
 
 """
-Write code to keep only evvents that are related to Toronto Raptors
+Write code to keep only events that are related to Toronto Raptors
 display result
 """
-
+display(df.where("calEvent.eventName like '%Raptors%'"))
 
 # COMMAND ----------
 
@@ -105,17 +113,40 @@ display result
 import pyspark.sql.functions as f 
 import pyspark.sql.types as T
 
+
 """
 Data transformation
 1. Flatten dataframe structure
 2. Keep columns:
     eventName,category.name,shortDescription,startDate,endDate,locationName,
     freeEvent,frequency,cost,dates.allDay,dates.endDateTime,dates.startDateTime
-
+    
+    explode: category, dates, locations
+    
 3. Count number of rows
 
 """
-       
+df_flatten = (
+                df.select("calEvent.*")
+                .select(f.explode("category").alias("event_category"),"*")
+                .select(f.explode("dates").alias("event_dates"),"*")
+                .select(f.explode("locations").alias("event_location"),"*")
+                .select("eventName",
+                         f.col("event_category.name").alias("event_category"),
+                         f.col("event_dates.description").alias("event_description"),
+                         "shortDescription",
+                         "startDate","endDate",
+                         "event_location.locationName",
+                         "freeEvent","frequency",
+                         "cost",
+                         "expectedAvg",
+                         "event_dates.allDay","event_dates.startDateTime"
+                        )
+
+             ) 
+
+df_flatten.count()
+display(df_flatten)
 
 # COMMAND ----------
 
@@ -124,13 +155,15 @@ Write code to keep only events that are related to Toronto Raptors
 display result
 """
 
+display(df_flatten.where("calEvent.eventName like '%Raptors%'"))
+
 
 # COMMAND ----------
 
 """
 Create a temporary view using DataFrame function createOrReplaceTempView()
 """
-
+df_flatten.createOrReplaceTempView("toronto_events")
 
 # COMMAND ----------
 
@@ -138,14 +171,29 @@ Create a temporary view using DataFrame function createOrReplaceTempView()
 # MAGIC /*
 # MAGIC Write SQL to count number of events that are free or not
 # MAGIC */
+# MAGIC select count(*) as ct_rows,
+# MAGIC        count(distinct eventName) as ct_distinct_events,
+# MAGIC        freeEvent
+# MAGIC       from toronto_events
+# MAGIC       where eventName like '%Raptors%'
+# MAGIC       group by freeEvent
+# MAGIC     order by freeEvent desc
 
 # COMMAND ----------
 
 # MAGIC %sql
 # MAGIC /*
 # MAGIC Write SQL to count number of events per category
-# MAGIC Add a column that show the percentage of free events per category
+# MAGIC Add a column that show the percentage of free events per category (case statement)
 # MAGIC */
+# MAGIC select count(*) as ct_rows,
+# MAGIC        count(distinct eventName) as ct_distinct_events,
+# MAGIC        event_category,
+# MAGIC        sum(case when freeEvent='Yes' then 1
+# MAGIC             else 0
+# MAGIC        end)/count(*)*100 as pct_free_events
+# MAGIC       from toronto_events
+# MAGIC       group by event_category
 
 # COMMAND ----------
 
@@ -153,6 +201,36 @@ Create a temporary view using DataFrame function createOrReplaceTempView()
 # MAGIC /*
 # MAGIC Write SQL to show events that are schedules only once
 # MAGIC */
+# MAGIC select *
+# MAGIC from toronto_events
+# MAGIC where frequency='once'
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select count(*) as ct_rows,
+# MAGIC              event_category,freeEvent
+# MAGIC       from toronto_events
+# MAGIC       group by event_category,freeEvent
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select event_category,
+# MAGIC        IsFree,
+# MAGIC        NotFree,
+# MAGIC        coalesce(IsFree,0)/(coalesce(NotFree,0)+coalesce(IsFree,0))*100  as pct_isFree
+# MAGIC from(
+# MAGIC       select count(*) as ct_rows,
+# MAGIC              event_category,freeEvent
+# MAGIC       from toronto_events
+# MAGIC       group by event_category,freeEvent
+# MAGIC       ) as a
+# MAGIC pivot(sum(ct_rows) as ct_rows
+# MAGIC       for freeEvent 
+# MAGIC       IN ('No' as NotFree, 'Yes' as IsFree)
+# MAGIC       )
+# MAGIC order by pct_isFree desc
 
 # COMMAND ----------
 
@@ -170,6 +248,12 @@ Create a temporary view using DataFrame function createOrReplaceTempView()
 # MAGIC /*
 # MAGIC Write SQL to count number of events per location
 # MAGIC */
+# MAGIC 
+# MAGIC 
+# MAGIC select count(*) as ct_rows,
+# MAGIC              count(distinct eventName, startDateTime) as ct_distinct
+# MAGIC       from toronto_events
+# MAGIC       
 
 # COMMAND ----------
 
@@ -182,14 +266,29 @@ import pyspark.sql.functions as f
 from pyspark.sql.window import Window
 
 """
+df_flatten.dropDuplicates
+f.dayofweek("startDateTime")
+f.dayofyear("startDateTime")
+df_flatten.withColumn()
+
 Use the flatten dataframe that you created previously to :
     1. Drop duplicates
-    2. Add day of week
+    2. Add day of week 
     3. Add day of year
     4. Add a new column event_date_id as: for each event, assign an incremental number to each date for example, if an event has 5 dates, the earliest date will be assigned number 1 and last date will be assigned number 5 Save transformed data 
 """
 
-
+df_flatten_transformed = (df_flatten
+                          .dropDuplicates()
+                          .withColumn("event_start_dayofweek",f.dayofweek("startDateTime"))
+                          .withColumn("event_start_dayofyear",f.dayofyear("startDateTime"))
+                                              .withColumn("event_date_id",
+                                                          f.row_number().over(Window.partitionBy(["eventName"])
+                                                                        .orderBy(f.col("startDateTime").asc())
+                                                                             )
+                                                         )
+                         )
+display(df_flatten_transformed.filter("eventName like '%Raptors%'"))
 
 # COMMAND ----------
 
@@ -204,6 +303,8 @@ display result
 # MAGIC /*
 # MAGIC Create a new database test_db if it does not exist
 # MAGIC */
+# MAGIC 
+# MAGIC CREATE DATABASE IF NOT EXISTS test_db;
 
 # COMMAND ----------
 
@@ -211,6 +312,8 @@ display result
 """
 Save DataFrame to a new table in database test_db
 """
+
+df_flatten_transformed.write.mode("overwrite").saveAsTable("test_db.toronto_events_transformed2")
 
 
 # COMMAND ----------
