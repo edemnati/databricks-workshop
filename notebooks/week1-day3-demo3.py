@@ -64,7 +64,7 @@ startingEventPosition = {
   "enqueuedTime": None,   #not in use
   "isInclusive": True
 }
-#ehConf['eventhubs.startingPosition'] = json.dumps(startingEventPosition)
+ehConf['eventhubs.startingPosition'] = json.dumps(startingEventPosition)
 
 # Encrypt ehConf connectionString property
 ehConf['eventhubs.connectionString'] = sc._jvm.org.apache.spark.eventhubs.EventHubsUtils.encrypt(connectionString)
@@ -83,10 +83,6 @@ df_readStream = (spark
 (df_readStream
  .select(f.decode(f.col("body").cast("string"), 'UTF-8').alias("Payload"),"*") 
 ).display()
-
-# COMMAND ----------
-
-# MAGIC %pip install dlt
 
 # COMMAND ----------
 
@@ -120,16 +116,16 @@ ehConf_write['eventhubs.connectionString'] = sc._jvm.org.apache.spark.eventhubs.
 (df_readStream
           .select(f.decode(f.col("body").cast("string"), 'UTF-8').alias("Payload"),"*")
           .writeStream
-          .format("json")
+          .format("delta")
           .outputMode("append")
           .options(**ehConf_write)
-          .option("checkpointLocation", "dbfs:/FileStore/test_stream/checkpointapievents5")
-          .start("dbfs:/FileStore/test_stream/writedata5")
+          .option("checkpointLocation", "dbfs:/FileStore/test_stream/checkpointapievents_delta")
+          .start("dbfs:/FileStore/test_stream/writedata_delta")
          )
 
 # COMMAND ----------
 
-df_read=spark.read.json("dbfs:/FileStore/test_stream/writedata5/")
+df_read=spark.read.format("delta").load("dbfs:/FileStore/test_stream/writedata_delta/")
 display(df_read)
 
 
@@ -138,12 +134,30 @@ display(df_read)
 # DBTITLE 1,Create table 
 # MAGIC %sql
 # MAGIC 
-# MAGIC CREATE TABLE IF NOT EXISTS test_db.test_events_bronze
-# MAGIC USING json LOCATION 'dbfs:/FileStore/test_stream/writedata5';
+# MAGIC CREATE TABLE IF NOT EXISTS test_db.test_events_bronze_delta
+# MAGIC USING delta LOCATION 'dbfs:/FileStore/test_stream/writedata_delta';
 # MAGIC 
 # MAGIC --select * from test_db.test_events_bronze;
 # MAGIC 
-# MAGIC select Payload:data,* from test_db.test_events_bronze;
+# MAGIC select Payload:data,* from test_db.test_events_bronze_delta;
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC DESCRIBE HISTORY test_db.test_events_bronze_delta
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC /*
+# MAGIC You can remove files no longer referenced by a Delta table and are older than the retention threshold by running the VACCUM command on the table. vacuum is not triggered automatically. The default retention threshold for the files is 7 days.
+# MAGIC 
+# MAGIC VACUUM Parameters
+# MAGIC   - table_name: Identifies an existing Delta table. The name must not include a temporal specification.
+# MAGIC   - RETAIN num HOURS: The retention threshold.
+# MAGIC   - DRY RUN: Return a list of up to 1000 files to be deleted.
+# MAGIC */
+# MAGIC VACUUM test_db.test_events_bronze --[RETAIN num HOURS] [DRY RUN]
 
 # COMMAND ----------
 
@@ -181,6 +195,11 @@ for i in range(i_max):
           .format("eventhubs") 
           .options(**ehWriteConf) 
           ).save()
+    print(test_event)
     time.sleep(3)
+
+
+
+# COMMAND ----------
 
 
