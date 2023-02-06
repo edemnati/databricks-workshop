@@ -9,7 +9,7 @@
 # MAGIC     1. create Event Hubs Instance
 # MAGIC         1. Add SAS Policy to generate a connectionString
 # MAGIC         1. Create a consumer group
-# MAGIC     1. Create a secret in Azure Key Vault with Event Hubs Instance connectionString
+# MAGIC     1. Create a secret in Azure Key Vault with Event Hubs Instance connectionString (Optional)
 # MAGIC     1. Databricks cluster: Install maven library: com.microsoft.azure:azure-eventhubs-spark_2.12:2.3.22
 # MAGIC 
 # MAGIC __Receive messages to event hub__
@@ -47,7 +47,7 @@ import pyspark.sql.functions as f
 import json
 # Initialize event hub config dictionary with connectionString
 connectionString = 'Endpoint=sb://ez-event-hub-mip.servicebus.windows.net/;SharedAccessKeyName=eztesteventhubsas;SharedAccessKey=9R2RVrw+1BGNTjXqonRE88hx95riYY/ZkBM4HaTZeW0=;EntityPath=ez-test-eventhub'
-consumer_group = 'test-eventhub-capture-cg' #'$Default'
+consumer_group = '$Default'
 eventhub_instance_name = 'ez-test-eventhub'
 
 ehConf = {}
@@ -91,7 +91,7 @@ df_readStream = (spark
 
 # Initialize event hub config dictionary with connectionString
 connectionString = 'Endpoint=sb://ez-event-hub-mip.servicebus.windows.net/;SharedAccessKeyName=eztesteventhubsas;SharedAccessKey=9R2RVrw+1BGNTjXqonRE88hx95riYY/ZkBM4HaTZeW0=;EntityPath=ez-test-eventhub'
-consumer_group = 'test-eventhub-capture-cg' #'$Default'
+consumer_group = '$Default'
 eventhub_instance_name = 'ez-test-eventhub'
 
 ehConf_write = {}
@@ -101,7 +101,7 @@ ehConf_write['eventhubs.consumerGroup'] = consumer_group
 
 # Create the positions
 # Start from beginning of stream
-startOffset = "4040"
+startOffset = "9640"
 startingEventPosition = {
   "offset": startOffset,  
   "seqNo": -1,            #not in use
@@ -134,12 +134,13 @@ display(df_read)
 # DBTITLE 1,Create table 
 # MAGIC %sql
 # MAGIC 
+# MAGIC 
 # MAGIC CREATE TABLE IF NOT EXISTS test_db.test_events_bronze_delta
 # MAGIC USING delta LOCATION 'dbfs:/FileStore/test_stream/writedata_delta';
 # MAGIC 
 # MAGIC --select * from test_db.test_events_bronze;
 # MAGIC 
-# MAGIC select Payload:data,* from test_db.test_events_bronze_delta;
+# MAGIC select Payload:data as new_data,* from test_db.test_events_bronze_delta;
 
 # COMMAND ----------
 
@@ -170,7 +171,7 @@ display(df_read)
 # DBTITLE 0,Send messages to event hub
 # Set up the Event Hub config dictionary with default settings
 writeConnectionString = 'Endpoint=sb://ez-event-hub-mip.servicebus.windows.net/;SharedAccessKeyName=eztesteventhubsas;SharedAccessKey=9R2RVrw+1BGNTjXqonRE88hx95riYY/ZkBM4HaTZeW0=;EntityPath=ez-test-eventhub'
-consumer_group = 'test-eventhub-capture-cg' #'$Default'
+consumer_group = '$Default'
 
 
 ehWriteConf = {}
@@ -185,7 +186,7 @@ import pandas as pd
 import pyspark.sql.types as T 
 
 myschema = T.StructType([T.StructField('body', T.StringType(), False)])
-i_max=10
+i_max=100
 for i in range(i_max):
     test_event = [{"body":json.dumps({"data":f"test write to event data {i}"})}]
     df_test = spark.createDataFrame(test_event,schema=myschema)
@@ -195,7 +196,7 @@ for i in range(i_max):
           .format("eventhubs") 
           .options(**ehWriteConf) 
           ).save()
-    print(test_event)
+    print(f'count number of rows:{spark.sql("select count(*) from test_db.test_events_bronze_delta").show()}')
     time.sleep(3)
 
 

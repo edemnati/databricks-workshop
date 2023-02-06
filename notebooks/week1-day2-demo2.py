@@ -36,6 +36,7 @@ configs = {
   "fs.azure.account.custom.token.provider.class": spark.conf.get("spark.databricks.passthrough.adls.gen2.tokenProviderClassName")
 }
 
+
 # Optionally, you can add <directory-name> to the source URI of your mount point.
 dbutils.fs.mount(
   source = "abfss://ez-filesystem@ezmylake.dfs.core.windows.net/",
@@ -49,7 +50,11 @@ spark.read.format("parquet").load("/mnt/my_mount_pass/NYCTripSmall.parquet").dis
 
 # COMMAND ----------
 
-dbutils.fs.unmount("/mnt/my_mount_pass")
+dbutils.fs.unmount("/mnt/my_lake")
+
+# COMMAND ----------
+
+f"fs.azure.account.key.{storage_account_name}.blob.core.windows.net"
 
 # COMMAND ----------
 
@@ -244,11 +249,11 @@ spark.read.format("parquet").load("abfss://ez-filesystem@ezmylake.dfs.core.windo
 
 # Key vault config
 """
-Go to https://<databricks-instance>#secrets/createScope
+Go to https://adb-6124167456231216.16.azuredatabricks.net/#secrets/createScope
 
 #SETUP:
     DNS_name: https://<YOUR_KV>.vault.azure.net/
-    Resource ID: /subscriptions/<YOUR-SUBSCRIPTION-ID>/resourcegroups/<YOUR-RG>/providers/Microsoft.KeyVault/vaults/<YOUR_KV>
+    Resource ID: /subscriptions/<YOUR-SUBSCRIPTION-ID>/resourcegroups/<YOUR-RG>/providers/Microsoft.KeyVault/vaults/db-test-vault
 
 #List secret scopes
 databricks secrets list-scopes
@@ -260,12 +265,16 @@ databricks secrets delete-scope --scope <scope-name>
 
 # COMMAND ----------
 
+dbutils.secrets.listScopes()
+
+# COMMAND ----------
+
 #dbutils.secrets.listScopes()
 dbutils.secrets.list('my-db-secret')
 
 # COMMAND ----------
 
-#x=dbutils.secrets.get(scope = scope_name, key = key_name)
+x=dbutils.secrets.get(scope = 'my-db-secret', key = 'ezmylake-key')
 
 #for i in x:
 #    print(i)
@@ -315,4 +324,9 @@ dbutils.widgets.get("<widgets_name>")
 #Delete
 dbutils.widgets.remove("<widgets_name>")
 dbutils.widgets.removeAll()
+
+
+# COMMAND ----------
+
+dbutils.widgets.text(name="storage_account",defaultValue="value",label="storage_account")
 
