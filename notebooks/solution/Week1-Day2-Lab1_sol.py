@@ -1,7 +1,7 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC # Data Exploration
-# MAGIC 
+# MAGIC
 # MAGIC __Steps:__
 # MAGIC Steps:
 # MAGIC 1. Get data:
@@ -29,7 +29,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC 
+# MAGIC
 # MAGIC ### Explore Dataset
 
 # COMMAND ----------
@@ -46,7 +46,7 @@ len(result)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC 
+# MAGIC
 # MAGIC ### Read data as spark dataFrame
 
 # COMMAND ----------
@@ -87,7 +87,7 @@ df.display()
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC 
+# MAGIC
 # MAGIC ### Check data for Raptors events
 
 # COMMAND ----------
@@ -102,7 +102,7 @@ display(df.where("calEvent.eventName like '%Raptor%'"))
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC 
+# MAGIC
 # MAGIC ### Flatten Dataset
 
 # COMMAND ----------
@@ -200,6 +200,7 @@ df_flatten.createOrReplaceTempView("toronto_events")
 # MAGIC       IN ('No' as NotFree, 'Yes' as IsFree)
 # MAGIC       )
 # MAGIC order by pct_isFree desc
+# MAGIC
 
 # COMMAND ----------
 
@@ -221,13 +222,15 @@ df_flatten.createOrReplaceTempView("toronto_events")
 # MAGIC   - Count number of rows
 # MAGIC   - Calculate the percentage of free events
 # MAGIC */
-# MAGIC 
+# MAGIC
 # MAGIC --Solution 1
 # MAGIC select count(distinct eventName) as ct_distinct,
 # MAGIC        count(*) as ct_rows,
 # MAGIC        sum(case when freeEvent='Yes' then 1 else 0 end)/count(*)*100 as pct_free
 # MAGIC from toronto_events
 # MAGIC order by ct_distinct desc
+# MAGIC
+# MAGIC
 
 # COMMAND ----------
 
@@ -246,6 +249,8 @@ df_flatten.createOrReplaceTempView("toronto_events")
 # MAGIC from toronto_events
 # MAGIC group by event_category
 # MAGIC order by ct_distinct desc
+# MAGIC
+# MAGIC
 
 # COMMAND ----------
 
@@ -254,6 +259,8 @@ df_flatten.createOrReplaceTempView("toronto_events")
 # MAGIC from toronto_events
 # MAGIC group by locationName
 # MAGIC order by ct_distinct desc
+# MAGIC
+# MAGIC
 
 # COMMAND ----------
 
@@ -318,13 +325,13 @@ df_flatten2.write.mode("overwrite").format("delta").save("dbfs:/FileStore/datase
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC 
+# MAGIC
 # MAGIC describe extended  test_db.toronto_events_transformed2
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC 
+# MAGIC
 # MAGIC ## Merge data
 
 # COMMAND ----------
@@ -436,11 +443,11 @@ df1.count()
 # MAGIC %sql
 # MAGIC -- Restore table to a specific timestamp
 # MAGIC --RESTORE TABLE test_db.toronto_events_transformed2 TO TIMESTAMP AS OF '2022-08-02 00:00:00';
-# MAGIC 
+# MAGIC
 # MAGIC -- Restore the employee table to a specific version number retrieved from DESCRIBE HISTORY employee
 # MAGIC RESTORE TABLE test_db.toronto_events_transformed2 TO VERSION AS OF 0;
 # MAGIC DESCRIBE HISTORY test_db.toronto_events_transformed2
-# MAGIC 
+# MAGIC
 # MAGIC -- Restore the employee table to the state it was in an hour ago
 # MAGIC --RESTORE TABLE test_db.toronto_events_transformed2 TO TIMESTAMP AS OF current_timestamp() - INTERVAL '1' HOUR;
 
@@ -455,7 +462,7 @@ df1.count()
 # MAGIC %sql
 # MAGIC --Clone table
 # MAGIC CREATE OR REPLACE TABLE test_db.toronto_events_clone CLONE test_db.toronto_events_transformed2;
-# MAGIC 
+# MAGIC
 # MAGIC select count(*) from test_db.toronto_events_clone
 
 # COMMAND ----------
@@ -463,6 +470,6 @@ df1.count()
 # MAGIC %sql
 # MAGIC --Convert table to delta format
 # MAGIC CONVERT TO DELTA database_name.table_name; -- only for Parquet tables
-# MAGIC 
+# MAGIC
 # MAGIC CONVERT TO DELTA parquet.`abfss://container-name@storage-account-name.dfs.core.windows.net/path/to/table`
 # MAGIC   PARTITIONED BY (date DATE); -- if the table is partitioned

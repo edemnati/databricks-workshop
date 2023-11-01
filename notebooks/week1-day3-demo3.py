@@ -1,39 +1,42 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC 
+# MAGIC
 # MAGIC # Azure Eventhub integration with Databricks
-# MAGIC 
+# MAGIC
 # MAGIC __Preparation__
-# MAGIC 
+# MAGIC
 # MAGIC     1. Create Event Hubs Namespace
 # MAGIC     1. create Event Hubs Instance
 # MAGIC         1. Add SAS Policy to generate a connectionString
 # MAGIC         1. Create a consumer group
 # MAGIC     1. Create a secret in Azure Key Vault with Event Hubs Instance connectionString (Optional)
 # MAGIC     1. Databricks cluster: Install maven library: com.microsoft.azure:azure-eventhubs-spark_2.12:2.3.22
-# MAGIC 
+# MAGIC
 # MAGIC __Receive messages to event hub__
-# MAGIC 
+# MAGIC
 # MAGIC     1. Create a read stream to Event Hub Instance
 # MAGIC     1. Store messages to storage location
 # MAGIC     1. Start receiver
-# MAGIC 
+# MAGIC
 # MAGIC __Send messages to event hub__
-# MAGIC 
+# MAGIC
 # MAGIC     1. Create an event generator
 # MAGIC     1. Write messages to Event Hub Instance
 # MAGIC     1. Start sender
+# MAGIC
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC 
+# MAGIC
 # MAGIC # Receive messages to event hub
 
 # COMMAND ----------
 
 # DBTITLE 1,Preparation
 # MAGIC %md
+# MAGIC
+# MAGIC
 
 # COMMAND ----------
 
@@ -133,14 +136,17 @@ display(df_read)
 
 # DBTITLE 1,Create table 
 # MAGIC %sql
-# MAGIC 
-# MAGIC 
+# MAGIC
+# MAGIC
 # MAGIC CREATE TABLE IF NOT EXISTS test_db.test_events_bronze_delta
 # MAGIC USING delta LOCATION 'dbfs:/FileStore/test_stream/writedata_delta';
-# MAGIC 
+# MAGIC
 # MAGIC --select * from test_db.test_events_bronze;
-# MAGIC 
+# MAGIC
 # MAGIC select Payload:data as new_data,* from test_db.test_events_bronze_delta;
+# MAGIC
+# MAGIC
+# MAGIC
 
 # COMMAND ----------
 
@@ -152,7 +158,7 @@ display(df_read)
 # MAGIC %sql
 # MAGIC /*
 # MAGIC You can remove files no longer referenced by a Delta table and are older than the retention threshold by running the VACCUM command on the table. vacuum is not triggered automatically. The default retention threshold for the files is 7 days.
-# MAGIC 
+# MAGIC
 # MAGIC VACUUM Parameters
 # MAGIC   - table_name: Identifies an existing Delta table. The name must not include a temporal specification.
 # MAGIC   - RETAIN num HOURS: The retention threshold.
@@ -163,7 +169,7 @@ display(df_read)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC 
+# MAGIC
 # MAGIC # Send messages to event hub
 
 # COMMAND ----------

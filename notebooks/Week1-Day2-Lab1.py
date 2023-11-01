@@ -1,7 +1,7 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC # Data Exploration
-# MAGIC 
+# MAGIC
 # MAGIC __Steps:__
 # MAGIC Steps:
 # MAGIC 1. Get data:
@@ -29,7 +29,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC 
+# MAGIC
 # MAGIC ### Explore Dataset
 
 # COMMAND ----------
@@ -46,7 +46,7 @@ len(result)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC 
+# MAGIC
 # MAGIC ### Read data as spark dataFrame
 
 # COMMAND ----------
@@ -91,7 +91,7 @@ display(df.count())
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC 
+# MAGIC
 # MAGIC ### Check data for Raptors events
 
 # COMMAND ----------
@@ -105,7 +105,7 @@ display(df.where("calEvent.eventName like '%Raptors%'"))
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC 
+# MAGIC
 # MAGIC ### Flatten Dataset
 
 # COMMAND ----------
@@ -178,6 +178,7 @@ df_flatten.createOrReplaceTempView("toronto_events")
 # MAGIC       where eventName like '%Raptors%'
 # MAGIC       group by freeEvent
 # MAGIC     order by freeEvent desc
+# MAGIC
 
 # COMMAND ----------
 
@@ -194,6 +195,7 @@ df_flatten.createOrReplaceTempView("toronto_events")
 # MAGIC        end)/count(*)*100 as pct_free_events
 # MAGIC       from toronto_events
 # MAGIC       group by event_category
+# MAGIC
 
 # COMMAND ----------
 
@@ -204,6 +206,7 @@ df_flatten.createOrReplaceTempView("toronto_events")
 # MAGIC select *
 # MAGIC from toronto_events
 # MAGIC where frequency='once'
+# MAGIC
 
 # COMMAND ----------
 
@@ -241,6 +244,8 @@ df_flatten.createOrReplaceTempView("toronto_events")
 # MAGIC   - Count number of rows
 # MAGIC   - Calculate the percentage of free events
 # MAGIC */
+# MAGIC
+# MAGIC
 
 # COMMAND ----------
 
@@ -248,12 +253,14 @@ df_flatten.createOrReplaceTempView("toronto_events")
 # MAGIC /*
 # MAGIC Write SQL to count number of events per location
 # MAGIC */
-# MAGIC 
-# MAGIC 
+# MAGIC
+# MAGIC
 # MAGIC select count(*) as ct_rows,
 # MAGIC              count(distinct eventName, startDateTime) as ct_distinct
 # MAGIC       from toronto_events
 # MAGIC       
+# MAGIC
+# MAGIC
 
 # COMMAND ----------
 
@@ -303,7 +310,7 @@ display result
 # MAGIC /*
 # MAGIC Create a new database test_db if it does not exist
 # MAGIC */
-# MAGIC 
+# MAGIC
 # MAGIC CREATE DATABASE IF NOT EXISTS test_db;
 
 # COMMAND ----------
@@ -327,7 +334,7 @@ Save DataFrame to dbfs location as delta format
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC 
+# MAGIC
 # MAGIC ## Merge data
 
 # COMMAND ----------

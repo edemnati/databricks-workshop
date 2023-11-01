@@ -1,16 +1,16 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC 
+# MAGIC
 # MAGIC # Databricks integration with Azure Synapse Datawarehouse
-# MAGIC 
+# MAGIC
 # MAGIC __Setup environment__
-# MAGIC 
+# MAGIC
 # MAGIC       1. Start  Azure Synapse workspace Create sql pool
 # MAGIC       1. Create a login and a user 
 # MAGIC       1. create master key
-# MAGIC 
+# MAGIC
 # MAGIC __Demo steps__
-# MAGIC 
+# MAGIC
 # MAGIC       1. Get some data from an Azure Synapse table
 # MAGIC       1. Apply some transformations to the data
 # MAGIC       1. Write the data back to another table in Azure Synapse
@@ -37,6 +37,8 @@ spark.conf.set( f"fs.azure.account.key.{storage_account_name}.dfs.core.windows.n
 
 # jdbc connection string
 jdbc_cs_sql_pwd="jdbc:sqlserver://ez-az-synapse-test.sql.azuresynapse.net:1433;database=mysqlpool;user=test_pool_login;password=MyPass1234;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.sql.azuresynapse.net;loginTimeout=30;"
+
+
 
 # Get some data from an Azure Synapse table. 
 synapse_dedicated_pool_cs = "ez-az-synapse-test.sql.azuresynapse.net"
@@ -69,10 +71,10 @@ display(df_agg)
 
 # Write the data back to another table in Azure Synapse. 
 (df_agg.write 
-  .format("com.databricks.spark.sqldw") 
+      .format("com.databricks.spark.sqldw") 
       .option("url", jdbc_cs_sql_pwd) 
       .option("forwardSparkAzureStorageCredentials", "true")            
-      .option("dbTable", "dbo.NYCTaxiTripSmall_agg") 
+      .option("dbTable", "dbo.NYCTaxiTripSmall_agg_new") 
       .option("tempDir", f"abfss://{container_name}@{storage_account_name}.dfs.core.windows.net/temp_synapse_dbx") 
      .save()
 )
@@ -85,5 +87,5 @@ df_agg.createOrReplaceTempView("df_agg")
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC 
+# MAGIC
 # MAGIC select * from df_agg

@@ -1,15 +1,15 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC 
+# MAGIC
 # MAGIC # Delta Live Tables
 # MAGIC %md
-# MAGIC 
+# MAGIC
 # MAGIC Delta Live Tables (DLT) makes it easy to build and manage reliable data pipelines that deliver high quality data on Delta Lake. 
-# MAGIC 
+# MAGIC
 # MAGIC DLT helps data engineering teams simplify ETL development and management with declarative pipeline development, automatic data testing, and deep visibility for monitoring and recovery.
-# MAGIC 
+# MAGIC
 # MAGIC <img src="https://databricks.com/wp-content/uploads/2021/09/Live-Tables-Pipeline.png" width=1012/>
-# MAGIC 
+# MAGIC
 # MAGIC __Demo steps__
 # MAGIC   1. Explore Delta Live Table pipeline UI
 # MAGIC   1. Run SQL dlt pipeline
@@ -43,12 +43,14 @@ display(event_log_raw)
 
 latest_update_id = spark.sql("SELECT origin.update_id FROM event_log_raw WHERE event_type = 'create_update' ORDER BY timestamp DESC LIMIT 1").collect()[0].update_id
 print(f"latest_update_id:{latest_update_id}")
+
 spark.conf.set('latest_update.id', latest_update_id)
 
 # COMMAND ----------
 
 # MAGIC %sql
 # MAGIC select '${latest_update.id}' as latest_update_id
+# MAGIC
 
 # COMMAND ----------
 
@@ -59,12 +61,14 @@ spark.conf.set('latest_update.id', latest_update_id)
 # MAGIC WHERE event_type = 'user_action'
 # MAGIC --and origin.update_id = '${latest_update.id}'
 # MAGIC order by timestamp desc
+# MAGIC
 
 # COMMAND ----------
 
 # DBTITLE 1,Lineage
 # MAGIC %sql
-# MAGIC SELECT details:flow_definition.output_dataset, details:flow_definition.input_datasets FROM event_log_raw WHERE event_type = 'flow_definition' AND origin.update_id = '${latest_update.id}'
+# MAGIC SELECT details:flow_definition.output_dataset, details:flow_definition.input_datasets 
+# MAGIC FROM event_log_raw WHERE event_type = 'flow_definition' AND origin.update_id = '${latest_update.id}'
 
 # COMMAND ----------
 
@@ -97,7 +101,7 @@ spark.conf.set('latest_update.id', latest_update_id)
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC 
+# MAGIC
 # MAGIC select * from dlt_test_py.clickstream_raw
 # MAGIC where curr_title is null
 # MAGIC limit 10
