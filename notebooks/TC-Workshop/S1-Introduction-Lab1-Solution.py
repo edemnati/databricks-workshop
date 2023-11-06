@@ -156,7 +156,7 @@ Write code to keep only events that are related to Toronto Raptors
 display result
 """
 
-display(df_flatten.where("calEvent.eventName like '%Raptors%'"))
+display(df_flatten.where("eventName like '%Raptors%'"))
 
 
 # COMMAND ----------
@@ -207,7 +207,7 @@ df_flatten_filtered = (df_flatten
                         .distinct()
                         )
 (df_flatten_filtered
-    .groupBy("event_category","event_category2")
+    .groupBy("event_category2")
     .sum("is_freeEvent")
     .withColumnRenamed("sum(is_freeEvent)","sum_is_freeEvent")
     #.withColumn("pct", f.round(f.col("sum(is_freeEvent)")/f.col("total")*100,2) )
@@ -291,6 +291,12 @@ Save DataFrame as delta format
     .save("/mnt/my_lake/td_workshop/test_data")
 )
 
+
+# COMMAND ----------
+
+# MAGIC %sh
+# MAGIC
+# MAGIC ls /mnt/my_lake/td_workshop/test_data
 
 # COMMAND ----------
 
