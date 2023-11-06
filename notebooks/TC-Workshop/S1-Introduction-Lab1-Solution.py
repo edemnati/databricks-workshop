@@ -88,7 +88,7 @@ display(df)
 Write code to keep only events that are related to Toronto Raptors
 display result
 """
-#<YOUR CODE HERE>
+display(df.where("calEvent.eventName like '%Raptors%'"))
 
 
 # COMMAND ----------
@@ -99,7 +99,7 @@ Order results by count in descending order
 display result
 """
 
-#<YOUR CODE HERE>
+df.select("calEvent.eventName").groupBy("eventName").count().orderBy("count",ascending=False).display()
 
 # COMMAND ----------
 
@@ -156,7 +156,7 @@ Write code to keep only events that are related to Toronto Raptors
 display result
 """
 
-#<YOUR CODE HERE>
+display(df_flatten.where("calEvent.eventName like '%Raptors%'"))
 
 
 # COMMAND ----------
@@ -164,7 +164,8 @@ display result
 """
 count number of events that are free or not
 """
-#<YOUR CODE HERE>
+display(df_flatten.groupBy("freeEvent").count())
+display(df_flatten.select("eventName","freeEvent").distinct().groupBy("freeEvent").count())
 
 
 # COMMAND ----------
@@ -199,13 +200,19 @@ import pyspark.sql.functions as f
 from pyspark.sql.window import Window
 
 windowSpec  = Window.partitionBy()
-# 1. Explode the event_category
-# 2. Create a new binary columns called is_freeEvent
-# 3. Select variables "eventName","is_freeEvent","event_category"
-df_flatten_filtered = #<YOUR CODE HERE>
-
-# 4. Count the number of free events per category 
-display(<YOUR CODE HERE>)
+df_flatten_filtered = (df_flatten
+                       .select(f.explode("event_category").alias("event_category2"),"*")
+                       .withColumn("is_freeEvent", f.when(df_flatten.freeEvent == "Yes",1).otherwise(0))
+                        .select("eventName","is_freeEvent","event_category","event_category2","freeEvent")
+                        .distinct()
+                        )
+(df_flatten_filtered
+    .groupBy("event_category","event_category2")
+    .sum("is_freeEvent")
+    .withColumnRenamed("sum(is_freeEvent)","sum_is_freeEvent")
+    #.withColumn("pct", f.round(f.col("sum(is_freeEvent)")/f.col("total")*100,2) )
+    .orderBy("sum_is_freeEvent",ascending=False)
+).display()
 
 
 
@@ -214,7 +221,7 @@ display(<YOUR CODE HERE>)
 """
 Show events that are schedules only once
 """
-#<YOUR CODE HERE>
+df_flatten.where("frequency='once'").count()
 
 
 # COMMAND ----------

@@ -178,7 +178,6 @@ test_df = (spark.read
               #.option("mode", "PERMISSIVE")
               .option("badRecordsPath", "/FileStore/tables/badRecordsPath")
               .load("dbfs:/FileStore/datasets/daily_bike_share_corrupted.csv")
-              #.load("/databricks-datasets/Rdatasets/data-001/csv/ggplot2/diamonds.csv")
               )
 display(test_df)
 
