@@ -16,7 +16,7 @@
 # MAGIC   
 # MAGIC   _Datarbicks UI_
 # MAGIC
-# MAGIC     1. Create databricks scret scope
+# MAGIC     1. Create databricks secret scope
 # MAGIC     1. Connect to Azure Storage using Python
 # MAGIC     1. Create mount
 
@@ -51,14 +51,14 @@ databricks secrets delete-scope --scope <scope-name>
 
 # COMMAND ----------
 
-dbutils.secrets.listScopes()
-#dbutils.secrets.list('my-db-secret')
-#dbutils.secrets.get('my-db-secret','ezmylake-key')
+#print(dbutils.secrets.listScopes())
+#print(dbutils.secrets.list('my-db-secret'))
+#print(dbutils.secrets.get('my-db-secret','ezmylake-key'))
 
-"""
+
 for c in dbutils.secrets.get('my-db-secret','ezmylake-key'):
     print(c)
-"""
+
 
 # COMMAND ----------
 
@@ -109,7 +109,7 @@ file_name = "<your-file-name>"
 
 container_name = "ez-filesystem"
 storage_account_name = "ezmylake"
-mount_name ="my_lake2"
+mount_name ="my_lake"
 conf_key = f"fs.azure.account.key.{storage_account_name}.blob.core.windows.net"
 scope_name = "my-db-secret" 
 key_name = "ezmylake-key"
@@ -124,19 +124,23 @@ dbutils.fs.mount(
                  )
 
 #df = spark.read.text("/mnt/<mount-name>/<file-name>")
-dbutils.fs.ls(f"/mnt/{mount_name}/")
+display(dbutils.fs.ls(f"/mnt/{mount_name}/"))
 #df.show()
 
 # COMMAND ----------
 
-spark.read.format("parquet").load("/mnt/my_lake2/NYCTripSmall.parquet").display()
+display(dbutils.fs.ls(f"/mnt/{mount_name}/"))
+
+# COMMAND ----------
+
+spark.read.format("parquet").load("/mnt/my_lake/NYCTripSmall.parquet").display()
 
 # COMMAND ----------
 
 # DBTITLE 1,SQL Query using mount point
 # MAGIC %sql
-# MAGIC
-# MAGIC CREATE TABLE IF NOT EXISTS test_db.NYCTripSmall2;
+# MAGIC --DROP TABLE test_db.NYCTripSmall;
+# MAGIC CREATE TABLE IF NOT EXISTS test_db.NYCTripSmall;
 # MAGIC
 # MAGIC COPY INTO test_db.NYCTripSmall
 # MAGIC FROM '/mnt/my_lake/NYCTripSmall.parquet'
@@ -146,7 +150,7 @@ spark.read.format("parquet").load("/mnt/my_lake2/NYCTripSmall.parquet").display(
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC SELECT * FROM parquet.`abfss://ez-filesystem@ezmylake.dfs.core.windows.net/NYCTripSmall.parquet`
+# MAGIC SELECT * FROM parquet.`/mnt/my_lake/NYCTripSmall.parquet`
 # MAGIC limit 10
 # MAGIC
 # MAGIC
@@ -163,7 +167,7 @@ spark.sql("SELECT * FROM parquet.`abfss://container@storageAccount.dfs.core.wind
 
 # COMMAND ----------
 
-display(spark.sql("SELECT * FROM parquet.`abfss://ez-filesystem@ezmylake.dfs.core.windows.net/NYCTripSmall.parquet`"))
+display(spark.sql("SELECT * FROM parquet.`/mnt/my_lake/NYCTripSmall.parquet`"))
 #display(spark.sql("SELECT * FROM parquet.`/mnt/my_lake/NYCTripSmall.parquet`"))
 
 # COMMAND ----------
@@ -174,6 +178,10 @@ display(spark.sql("SELECT * FROM parquet.`abfss://ez-filesystem@ezmylake.dfs.cor
 # MAGIC
 # MAGIC 1. Create Service Principal: https://learn.microsoft.com/en-us/azure/databricks/security/aad-storage-service-principal
 # MAGIC 1. Assign role "Storage Blob Data Contributor" on azure storage to service principal
+
+# COMMAND ----------
+
+dbutils.fs.unmount("/mnt/test_mnt_sp")
 
 # COMMAND ----------
 
@@ -193,32 +201,16 @@ configs = {"fs.azure.account.auth.type": "OAuth",
 
 dbutils.fs.mount(
 source = "abfss://ez-filesystem@ezmylake.dfs.core.windows.net/",
-mount_point = "/mnt/test_mnt_sp2",
+mount_point = "/mnt/test_mnt_sp",
 extra_configs = configs)
 
 #spark.read.format("parquet").load("/mnt/test_mnt_sp/NYCTripSmall.parquet").display()
 
 # COMMAND ----------
 
-spark.read.format("parquet").load("/mnt/test_mnt_sp/NYCTripSmall.parquet").display()
+df = spark.read.format("parquet").load("/mnt/test_mnt_sp/NYCTripSmall.parquet")
 
-# COMMAND ----------
-
-service_credential = dbutils.secrets.get(scope="my-db-secret" ,key="ez-test-db-sp-secret-key")
-
-storage_account = "ezmylake"
-application_id="5922fe8f-4a22-48f7-92cf-c72752041bec"
-tenant_id="16b3c013-d300-468d-ac64-7eda0820b6d3"
-
-spark.conf.set(F"fs.azure.account.auth.type.{storage_account}.dfs.core.windows.net", "OAuth")
-spark.conf.set(F"fs.azure.account.oauth.provider.type.{storage_account}.dfs.core.windows.net", "org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider")
-spark.conf.set(F"fs.azure.account.oauth2.client.id.{storage_account}.dfs.core.windows.net", application_id)
-spark.conf.set(F"fs.azure.account.oauth2.client.secret.{storage_account}.dfs.core.windows.net", service_credential)
-spark.conf.set(F"fs.azure.account.oauth2.client.endpoint.{storage_account}.dfs.core.windows.net", f"https://login.microsoftonline.com/{tenant_id}/oauth2/token")
-
-# COMMAND ----------
-
-spark.read.format("parquet").load("abfss://ez-filesystem@ezmylake.dfs.core.windows.net/NYCTripSmall.parquet").display()
+df.display()
 
 # COMMAND ----------
 
@@ -320,6 +312,10 @@ dbutils.widgets.help()
 
 # COMMAND ----------
 
+dbutils.data.summarize(df)
+
+# COMMAND ----------
+
 #Data
 dbutils.data.summarize("<dataframe_name>")
 
@@ -364,6 +360,10 @@ dbutils.widgets.text(name="storage_account",defaultValue="value",label="storage_
 
 # COMMAND ----------
 
+dbutils.widgets.get("storage_account")
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC ## User Defined Function (UDF)
 
@@ -390,6 +390,10 @@ Fdf.display()
 # COMMAND ----------
 
 df.display()
+
+# COMMAND ----------
+
+df_pdf = spark.read.format("binary").load("path_location/")
 
 # COMMAND ----------
 
@@ -437,3 +441,7 @@ display(df_query)
 # MAGIC     - Display dataframe
 # MAGIC 1. Use Python or SQL to transform aggregate the data
 # MAGIC 1. Save the transformed data to a file or a table
+
+# COMMAND ----------
+
+display(dbutils.fs.mounts())

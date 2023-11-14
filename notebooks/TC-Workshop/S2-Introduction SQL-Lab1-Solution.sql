@@ -1,11 +1,32 @@
 -- Databricks notebook source
-
-
--- COMMAND ----------
-
--- MAGIC %sql
--- MAGIC --SHOW SCHEMAS IN samples
--- MAGIC SHOW TABLES IN samples.tpch
+-- MAGIC %md
+-- MAGIC # Data Exploration
+-- MAGIC
+-- MAGIC __Steps:__
+-- MAGIC Steps:
+-- MAGIC 1. Get data:
+-- MAGIC 	• Data source: Toronto Open data Portal - Festivals & Events:  https://open.toronto.ca/dataset/festivals-events/
+-- MAGIC 2. Explore data structure
+-- MAGIC 	1. Count number of rows
+-- MAGIC 	2. Display dataframe schema
+-- MAGIC 3. Data transformation
+-- MAGIC 	1. Flatten dataframe structure
+-- MAGIC 	2. Keep rows: eventName, category.name, shortDescription, startDate, endDate, locationName, freeEvent, frequency, cost, dates.allDay, dates.startDateTime
+-- MAGIC 	3. Count number of rows
+-- MAGIC 4. Data profiling
+-- MAGIC 5. Data analysis
+-- MAGIC 6. Enhance data
+-- MAGIC 	1. Add day of week 
+-- MAGIC 	2. Add day of year
+-- MAGIC 	3. For events that have multiple dates, we want to assign an incremental number to each date 
+-- MAGIC 	for example, if an event has 5 dates, the earliest date will be assigned number 1 and last date will be assigned number 5
+-- MAGIC Save transformed data
+-- MAGIC
+-- MAGIC __pyspark SQL functions__
+-- MAGIC https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/functions.html
+-- MAGIC
+-- MAGIC __Delta Lake Cheat sheet__
+-- MAGIC https://pages.databricks.com/rs/094-YMS-629/images/Delta%20Lake%20Cheat%20Sheet.pdf
 
 -- COMMAND ----------
 
