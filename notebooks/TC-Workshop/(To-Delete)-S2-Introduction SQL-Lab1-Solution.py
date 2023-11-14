@@ -63,7 +63,6 @@ write code to read the json file that you save to dbfs folder
 1. Count number of rows
 2. Display dataframe schema
 """
-
 df = spark.read.json("dbfs:/FileStore/ezzatdemnati/test.json")
 
 print(f"Count rows:{df.count()}")
@@ -121,7 +120,7 @@ Data transformation
     eventName,category.name,shortDescription,startDate,endDate,locationName,
     freeEvent,frequency,cost,dates.allDay,dates.endDateTime,dates.startDateTime
     
-    explode arrays: category, dates, locations
+    explode: category, dates, locations
     
 3. Count number of rows
 
@@ -193,7 +192,7 @@ windowSpec  = Window.partitionBy()
 # COMMAND ----------
 
 """
-Add a column that show the count of free events per category
+Add a column that show the percentage of free events per category
 1- Create a Free_event flag (0,1)
 2- Count free events per category
 """
@@ -204,8 +203,8 @@ windowSpec  = Window.partitionBy()
 df_flatten_filtered = (df_flatten
                        .select(f.explode("event_category").alias("event_category2"),"*")
                        .withColumn("is_freeEvent", f.when(df_flatten.freeEvent == "Yes",1).otherwise(0))
-                       .select("eventName","is_freeEvent","event_category","event_category2","freeEvent")
-                       .distinct()
+                        .select("eventName","is_freeEvent","event_category","event_category2","freeEvent")
+                        .distinct()
                         )
 (df_flatten_filtered
     .groupBy("event_category2")
@@ -259,13 +258,13 @@ df_flatten_transformed = (df_flatten
                           .dropDuplicates()
                           .withColumn("event_start_dayofweek",f.dayofweek("startDateTime"))
                           .withColumn("event_start_dayofyear",f.dayofyear("startDateTime"))
-                          .withColumn("event_date_id",
-                                        f.row_number().over(Window.partitionBy(["eventName"])
-                                                    .orderBy(f.col("startDateTime").asc())
-                                                            )
-                                        )
+                                              .withColumn("event_date_id",
+                                                          f.row_number().over(Window.partitionBy(["eventName"])
+                                                                        .orderBy(f.col("startDateTime").asc())
+                                                                             )
+                                                         )
                          )
-display(df_flatten_transformed.select("eventName","event_date_id"))#.filter("eventName like '%Raptors%'"))
+display(df_flatten_transformed.filter("eventName like '%Raptors%'"))
 
 # COMMAND ----------
 
@@ -276,13 +275,6 @@ Save DataFrame to a new table in database test_db
 
 df_flatten_transformed.write.mode("overwrite").option("overwriteSchema", "true").saveAsTable("test_db.toronto_events_transformed3")
 
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC
-# MAGIC select * from test_db.toronto_events_transformed3
-# MAGIC limit 10
 
 # COMMAND ----------
 
@@ -302,14 +294,9 @@ Save DataFrame as delta format
 
 # COMMAND ----------
 
-(df_flatten_transformed
-    .write
-    #.partitionBy(<colA>,<colB>)
-    .format("json")
-    .mode('overwrite')
-    .option("overwriteSchema", "true")
-    .save("/mnt/my_lake/td_workshop/test_data.json")
-)
+# MAGIC %sh
+# MAGIC
+# MAGIC ls /mnt/my_lake/td_workshop/test_data
 
 # COMMAND ----------
 
