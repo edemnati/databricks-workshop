@@ -50,10 +50,17 @@
 
 -- COMMAND ----------
 
+-- MAGIC %python
+-- MAGIC # TC mount: /mnt/tc-tea-air-01
+-- MAGIC display(dbutils.fs.ls("/mnt/my_lake/"))
+
+-- COMMAND ----------
+
 -- DBTITLE 1,Save to file
 -- MAGIC %python
 -- MAGIC """
 -- MAGIC Save DataFrame as delta format
+-- MAGIC TC mount: /mnt/tc-tea-air-01
 -- MAGIC """
 -- MAGIC (df
 -- MAGIC     .write
@@ -66,7 +73,7 @@
 -- COMMAND ----------
 
 -- DBTITLE 1,Create a table
-CREATE TABLE IF NOT EXISTS test_db.toronto_events_raw_delta;
+CREATE TABLE IF NOT EXISTS toronto_events_raw_delta;
 
  ALTER TABLE test_db.toronto_events_raw_delta SET TBLPROPERTIES (
     'delta.minReaderVersion' = '2',
@@ -74,7 +81,7 @@ CREATE TABLE IF NOT EXISTS test_db.toronto_events_raw_delta;
     'delta.columnMapping.mode' = 'name'
   );
 
-COPY INTO test_db.toronto_events_raw_delta
+COPY INTO toronto_events_raw_delta
 FROM '/mnt/my_lake/td_workshop/toronto_events_raw.json' 
 FILEFORMAT = JSON
 FORMAT_OPTIONS('header'='true','inferSchema'='True')
@@ -85,9 +92,11 @@ COPY_OPTIONS ('mergeSchema' = 'true');
 --Write a SQL query to: Select events that contain more than one row (observation)
 
 
+
 -- COMMAND ----------
 
---Write a SQL query to: count the numner of events per category
+--Write a SQL query to: count the number of events per category 
+
 
 
 
@@ -115,7 +124,7 @@ Data transformation
 -- MAGIC ### Create a Toronto Event and Festivals summary report
 -- MAGIC 1. From the SQL editor, create a query that create a SQL view named vw_toronto_events_categories as:
 -- MAGIC     - Explode event_category
--- MAGIC     - Cast startDatetime as date (formatuse this format: 'y-M-d')
+-- MAGIC     - Cast startDatetime as date (format use this format: 'y-M-d')
 -- MAGIC 2. Save the new query
 -- MAGIC 3. From the Catalog, click on the view and download the PowerBI Data source Connection file
 -- MAGIC

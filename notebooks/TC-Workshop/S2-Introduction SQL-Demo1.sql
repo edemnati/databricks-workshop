@@ -60,6 +60,11 @@
 
 -- COMMAND ----------
 
+-- MAGIC %python
+-- MAGIC display(dbutils.fs.mounts())
+
+-- COMMAND ----------
+
 -- MAGIC %sql
 -- MAGIC --SHOW SCHEMAS IN samples
 -- MAGIC SHOW TABLES IN samples.tpch
@@ -89,12 +94,12 @@
 -- MAGIC %sql
 -- MAGIC
 -- MAGIC --Join tables and aggregate results.
--- MAGIC Select 
--- MAGIC c_mktsegment,
--- MAGIC o_orderpriority,
--- MAGIC o_orderstatus, 
--- MAGIC sum(o_totalprice) as sum_order_total 
--- MAGIC from samples.tpch.orders as o 
+-- MAGIC SELECT  
+-- MAGIC   c_mktsegment,
+-- MAGIC   o_orderpriority,
+-- MAGIC   o_orderstatus, 
+-- MAGIC   sum(o_totalprice) as sum_order_total 
+-- MAGIC FROM samples.tpch.orders as o 
 -- MAGIC LEFT JOIN samples.tpch.customer as c on c.c_custkey=o.o_custkey
 -- MAGIC WHERE c_mktsegment in ('BUILDING','FURNITURE')
 -- MAGIC GROUP BY c_mktsegment,o_orderpriority,o_orderstatus
@@ -108,7 +113,12 @@
 -- COMMAND ----------
 
 -- MAGIC %python
--- MAGIC display(dbutils.fs.ls("/mnt/my_lake/data"))
+-- MAGIC display(dbutils.fs.mounts())
+
+-- COMMAND ----------
+
+-- MAGIC %python
+-- MAGIC display(dbutils.fs.ls("/mnt/my_lake/"))
 -- MAGIC #display(dbutils.fs.ls("abfss://ez-filesystem@ezmylake.dfs.core.windows.net/data")
 
 -- COMMAND ----------
@@ -131,7 +141,7 @@
 -- MAGIC %sql
 -- MAGIC --CREATE [SCHEMA|DATABASE] IF NOT EXISTS database_name
 -- MAGIC
--- MAGIC CREATE SCHEMA IF NOT EXISTS test_db
+-- MAGIC CREATE DATABASE IF NOT EXISTS test_db
 
 -- COMMAND ----------
 
@@ -140,9 +150,9 @@
 -- MAGIC
 -- MAGIC --Path ADLS nomenclature: abfss://<container>@<storage-account>.dfs.core.windows.net/<folder>
 -- MAGIC --DROP TABLE test_db.tbl_daily_bike_share_EXT;
--- MAGIC CREATE TABLE IF NOT EXISTS test_db.tbl_daily_bike_share_EXT
+-- MAGIC CREATE TABLE IF NOT EXISTS tbl_daily_bike_share_EXT
 -- MAGIC USING CSV
--- MAGIC OPTIONS (path "/mnt/my_lake2/data/daily-bike-share.csv",
+-- MAGIC OPTIONS (path "/mnt/my_lake/data/daily-bike-share.csv",
 -- MAGIC 'header' = 'true',
 -- MAGIC   'inferSchema' = 'true',
 -- MAGIC   'mergeSchema' = 'true')
@@ -254,6 +264,7 @@
 -- DBTITLE 1,Create managed table from json file
 -- MAGIC %sql
 -- MAGIC -- Create Managed Table
+-- MAGIC DRop table test_db.test_json_array_nested_managed;
 -- MAGIC CREATE TABLE IF NOT EXISTS test_db.test_json_array_nested_managed;
 -- MAGIC COPY INTO test_db.test_json_array_nested_managed
 -- MAGIC FROM '/mnt/my_lake/data/test_json_array_nested.json' 
@@ -267,13 +278,20 @@
 
 -- COMMAND ----------
 
-SELECT a,b,c,explode(d) as col 
-      FROM test_db.test_json_array_nested_managed
+SELECT *,d_exp.*
+FROM (
+            SELECT a,b,c,explode(d) as d_exp
+                  FROM test_db.test_json_array_nested_managed
+)
+
 
 -- COMMAND ----------
 
 -- DBTITLE 1,Flatten table structure
 -- MAGIC %sql
+-- MAGIC
+-- MAGIC --Array
+-- MAGIC --Structure 
 -- MAGIC
 -- MAGIC CREATE TABLE IF NOT EXISTS test_db.test_json_flat_managed
 -- MAGIC AS 
