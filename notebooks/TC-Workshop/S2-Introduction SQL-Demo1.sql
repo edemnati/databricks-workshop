@@ -60,11 +60,6 @@
 
 -- COMMAND ----------
 
--- MAGIC %python
--- MAGIC display(dbutils.fs.mounts())
-
--- COMMAND ----------
-
 -- MAGIC %sql
 -- MAGIC --SHOW SCHEMAS IN samples
 -- MAGIC SHOW TABLES IN samples.tpch
@@ -113,19 +108,19 @@
 -- COMMAND ----------
 
 -- MAGIC %python
+-- MAGIC # Explore Mount points that are available
 -- MAGIC display(dbutils.fs.mounts())
 
 -- COMMAND ----------
 
 -- MAGIC %python
 -- MAGIC display(dbutils.fs.ls("/mnt/my_lake/"))
--- MAGIC #display(dbutils.fs.ls("abfss://ez-filesystem@ezmylake.dfs.core.windows.net/data")
 
 -- COMMAND ----------
 
 -- MAGIC %sql
 -- MAGIC /* Preview your data */
--- MAGIC SELECT * FROM read_files("/mnt/my_lake/data/daily-bike-share.csv") LIMIT 10
+-- MAGIC SELECT * FROM read_files("dbfs:/mnt/my_lake/NYCTripSmall.parquet") LIMIT 10
 -- MAGIC
 -- MAGIC -- OR --
 -- MAGIC --SELECT * FROM csv.`/mnt/my_lake/data/daily-bike-share.csv`
@@ -169,7 +164,7 @@
 -- MAGIC CREATE TABLE IF NOT EXISTS test_db.tbl_daily_bike_share_csv_managed;
 -- MAGIC
 -- MAGIC COPY INTO test_db.tbl_daily_bike_share_csv_managed
--- MAGIC FROM '/mnt/my_lake/data/daily-bike-share.csv' 
+-- MAGIC FROM '/mnt/my_lake2/data/daily-bike-share.csv' 
 -- MAGIC FILEFORMAT = CSV
 -- MAGIC FORMAT_OPTIONS('header'='true','inferSchema'='True')
 -- MAGIC COPY_OPTIONS ('mergeSchema' = 'true');

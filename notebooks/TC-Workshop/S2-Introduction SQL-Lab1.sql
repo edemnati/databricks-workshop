@@ -51,8 +51,15 @@
 -- COMMAND ----------
 
 -- MAGIC %python
--- MAGIC # TC mount: /mnt/tc-tea-air-01
--- MAGIC display(dbutils.fs.ls("/mnt/my_lake/"))
+-- MAGIC # Run this command to find a mount that you can useto save the file to 
+-- MAGIC display(dbutils.fs.mounts())
+
+-- COMMAND ----------
+
+-- MAGIC %python
+-- MAGIC # List files that are under the selected mount point
+-- MAGIC mount_point = "/mnt/my_lake/"
+-- MAGIC display(dbutils.fs.ls(mount_point))
 
 -- COMMAND ----------
 
@@ -67,13 +74,14 @@
 -- MAGIC     .format("json")
 -- MAGIC     .mode('overwrite')
 -- MAGIC     .option("overwriteSchema", "true")
--- MAGIC     .save("/mnt/my_lake/td_workshop/toronto_events_raw.json")
+-- MAGIC     .save(f"{mount_point}/td_workshop/toronto_events_raw.json")
 -- MAGIC )
 
 -- COMMAND ----------
 
 -- DBTITLE 1,Create a table
-CREATE TABLE IF NOT EXISTS toronto_events_raw_delta;
+CREATE DATABASE IF NOT EXISTS tes_db;
+CREATE TABLE IF NOT EXISTS tes_db.toronto_events_raw_delta;
 
  ALTER TABLE test_db.toronto_events_raw_delta SET TBLPROPERTIES (
     'delta.minReaderVersion' = '2',
@@ -81,8 +89,8 @@ CREATE TABLE IF NOT EXISTS toronto_events_raw_delta;
     'delta.columnMapping.mode' = 'name'
   );
 
-COPY INTO toronto_events_raw_delta
-FROM '/mnt/my_lake/td_workshop/toronto_events_raw.json' 
+COPY INTO tes_db.toronto_events_raw_delta
+FROM f'{mount_point}/td_workshop/toronto_events_raw.json' 
 FILEFORMAT = JSON
 FORMAT_OPTIONS('header'='true','inferSchema'='True')
 COPY_OPTIONS ('mergeSchema' = 'true');
@@ -106,8 +114,8 @@ COPY_OPTIONS ('mergeSchema' = 'true');
 Data transformation
 1. Flatten dataframe calEvent structure
 2. Keep columns:
-    eventName,category.name,locations.locationName,shortDescription,startDate,endDate,locationName,
-    freeEvent,frequency,cost,dates.allDay,dates.endDateTime,dates.startDateTime
+    eventName,category.name,locations.locationName,shortDescription,startDate,endDate,
+    freeEvent,frequency,cost,dates
     
     explode array: dates
     

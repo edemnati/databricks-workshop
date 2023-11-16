@@ -114,7 +114,8 @@
 -- DBTITLE 1,Time Travel
 -- MAGIC %sql
 -- MAGIC --select version at of timestamp
--- MAGIC SELECT count(*) as ct FROM test_db.toronto_events_transformed2 TIMESTAMP AS OF '2023-11-14T17:29:38.000+00:00'
+-- MAGIC SELECT * FROM test_db.toronto_events_transformed2 TIMESTAMP AS OF '2023-11-13'
+-- MAGIC limit 100
 
 -- COMMAND ----------
 

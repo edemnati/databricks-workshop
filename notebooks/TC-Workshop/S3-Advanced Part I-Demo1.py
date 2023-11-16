@@ -1,4 +1,8 @@
 # Databricks notebook source
+# MAGIC %run n
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC
 # MAGIC # Demo - Connect to Azure Data Lake Storage Gen2
@@ -56,8 +60,8 @@ databricks secrets delete-scope --scope <scope-name>
 #print(dbutils.secrets.get('my-db-secret','ezmylake-key'))
 
 
-for c in dbutils.secrets.get('my-db-secret','ezmylake-key'):
-    print(c)
+#for c in dbutils.secrets.get('my-db-secret','ezmylake-key'):
+#    print(c)
 
 
 # COMMAND ----------
@@ -67,6 +71,11 @@ for c in dbutils.secrets.get('my-db-secret','ezmylake-key'):
 # MAGIC ## Access to Azure blob storage Gen2
 # MAGIC
 # MAGIC ### Mount point
+
+# COMMAND ----------
+
+#display(dbutils.fs.mounts())
+display(dbutils.fs.ls("dbfs:/mnt/my_lake/new_extenal_table2.parquet/"))
 
 # COMMAND ----------
 
@@ -329,8 +338,9 @@ dbutils.notebook.run("<notebook_path>")
 #--------------------
 #Secrets
 dbutils.secrets.listScopes()
-dbutils.secrets.get("<scope_name>","<key_name>")
 dbutils.secrets.list("<scope_name>")
+dbutils.secrets.get("<scope_name>","<key_name>")
+
 
 #--------------------
 #Widgets
@@ -355,7 +365,8 @@ dbutils.widgets.removeAll()
 
 # COMMAND ----------
 
-dbutils.widgets.text(name="storage_account",defaultValue="value",label="storage_account")
+dbutils.widgets.text(name="Cutomer_ID",defaultValue="mylake",label="Cutomer ID")
+dbutils.widgetsdropdown(name: "test_dropdown", choices: ["val1","val2"], label: "Test Dropdown") 
 
 
 # COMMAND ----------
@@ -394,6 +405,10 @@ df.display()
 # COMMAND ----------
 
 df_pdf = spark.read.format("binary").load("path_location/")
+
+# COMMAND ----------
+
+
 
 # COMMAND ----------
 
@@ -445,3 +460,11 @@ display(df_query)
 # COMMAND ----------
 
 display(dbutils.fs.mounts())
+
+# COMMAND ----------
+
+df = spark.read.
+
+# COMMAND ----------
+
+df.printSchema()
