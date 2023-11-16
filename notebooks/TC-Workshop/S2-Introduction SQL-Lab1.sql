@@ -51,14 +51,14 @@
 -- COMMAND ----------
 
 -- MAGIC %python
--- MAGIC # Run this command to find a mount that you can useto save the file to 
+-- MAGIC # Run this command to find a mount that you can use to save the file to 
 -- MAGIC display(dbutils.fs.mounts())
 
 -- COMMAND ----------
 
 -- MAGIC %python
 -- MAGIC # List files that are under the selected mount point
--- MAGIC mount_point = "/mnt/my_lake/"
+-- MAGIC mount_point = "/mnt/my_lake2/"
 -- MAGIC display(dbutils.fs.ls(mount_point))
 
 -- COMMAND ----------
@@ -74,14 +74,15 @@
 -- MAGIC     .format("json")
 -- MAGIC     .mode('overwrite')
 -- MAGIC     .option("overwriteSchema", "true")
--- MAGIC     .save(f"{mount_point}/td_workshop/toronto_events_raw.json")
+-- MAGIC     .save(f"{mount_point}/tc_workshop/toronto_events_raw.json")
 -- MAGIC )
 
 -- COMMAND ----------
 
 -- DBTITLE 1,Create a table
-CREATE DATABASE IF NOT EXISTS tes_db;
-CREATE TABLE IF NOT EXISTS tes_db.toronto_events_raw_delta;
+CREATE DATABASE IF NOT EXISTS test_db;
+DROP TABLE IF EXISTS test_db.toronto_events_raw_delta;
+CREATE TABLE IF NOT EXISTS test_db.toronto_events_raw_delta;
 
  ALTER TABLE test_db.toronto_events_raw_delta SET TBLPROPERTIES (
     'delta.minReaderVersion' = '2',
@@ -89,10 +90,10 @@ CREATE TABLE IF NOT EXISTS tes_db.toronto_events_raw_delta;
     'delta.columnMapping.mode' = 'name'
   );
 
-COPY INTO tes_db.toronto_events_raw_delta
-FROM f'{mount_point}/td_workshop/toronto_events_raw.json' 
+COPY INTO test_db.toronto_events_raw_delta
+FROM '/mnt/my_lake2/td_workshop/toronto_events_raw.json' 
 FILEFORMAT = JSON
-FORMAT_OPTIONS('header'='true','inferSchema'='True')
+FORMAT_OPTIONS('header'='true','inferSchema'='true')
 COPY_OPTIONS ('mergeSchema' = 'true');
 
 -- COMMAND ----------
@@ -100,11 +101,9 @@ COPY_OPTIONS ('mergeSchema' = 'true');
 --Write a SQL query to: Select events that contain more than one row (observation)
 
 
-
 -- COMMAND ----------
 
 --Write a SQL query to: count the number of events per category 
-
 
 
 

@@ -1,4 +1,8 @@
 -- Databricks notebook source
+
+
+-- COMMAND ----------
+
 -- MAGIC %md
 -- MAGIC # Introduction to Databricks
 -- MAGIC
@@ -262,7 +266,7 @@
 -- MAGIC DRop table test_db.test_json_array_nested_managed;
 -- MAGIC CREATE TABLE IF NOT EXISTS test_db.test_json_array_nested_managed;
 -- MAGIC COPY INTO test_db.test_json_array_nested_managed
--- MAGIC FROM '/mnt/my_lake/data/test_json_array_nested.json' 
+-- MAGIC FROM '/mnt/my_lake2/data/test_json_array_nested.json' 
 -- MAGIC FILEFORMAT = JSON
 -- MAGIC COPY_OPTIONS ('mergeSchema' = 'true');
 -- MAGIC ;
@@ -273,7 +277,7 @@
 
 -- COMMAND ----------
 
-SELECT *,d_exp.*
+SELECT a,b,c,d_exp.*
 FROM (
             SELECT a,b,c,explode(d) as d_exp
                   FROM test_db.test_json_array_nested_managed
@@ -308,7 +312,7 @@ FROM (
 -- MAGIC -- Create Managed Table to join with
 -- MAGIC CREATE TABLE IF NOT EXISTS test_db.test_json_managed;
 -- MAGIC COPY INTO test_db.test_json_managed
--- MAGIC FROM '/mnt/my_lake/data/test_json.json' 
+-- MAGIC FROM '/mnt/my_lake2/data/test_json.json' 
 -- MAGIC FILEFORMAT = JSON
 -- MAGIC COPY_OPTIONS ('mergeSchema' = 'true');
 -- MAGIC ;
@@ -328,5 +332,5 @@ FROM (
 -- MAGIC SELECT * 
 -- MAGIC FROM 
 -- MAGIC (SELECT a,b,c FROM test_db.test_json_flat_managed)
--- MAGIC UNION ALL
+-- MAGIC UNION
 -- MAGIC (SELECT a,b,c FROM test_db.test_json_managed)

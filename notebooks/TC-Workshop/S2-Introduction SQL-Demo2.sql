@@ -105,9 +105,9 @@
 -- DBTITLE 1,Versions
 -- MAGIC %sql
 -- MAGIC -- Count rows for each version
--- MAGIC SELECT 0 as version, count(*) as ct FROM test_db.toronto_events_transformed2 VERSION AS OF 0
+-- MAGIC SELECT 5 as version, count(*) as ct FROM test_db.toronto_events_transformed2 VERSION AS OF 5
 -- MAGIC UNION ALL
--- MAGIC SELECT 6 as version, count(*) as ct FROM test_db.toronto_events_transformed2 VERSION AS OF 6
+-- MAGIC SELECT 10 as version, count(*) as ct FROM test_db.toronto_events_transformed2 VERSION AS OF 10
 
 -- COMMAND ----------
 
@@ -122,7 +122,7 @@
 -- DBTITLE 1,Time Travel
 -- MAGIC %python
 -- MAGIC #select version at of timestamp
--- MAGIC df1 = spark.read.format('delta').option('timestampAsOf', '2023-02-01').table("test_db.toronto_events_transformed2")
+-- MAGIC df1 = spark.read.format('delta').option('timestampAsOf', '2023-11-16T18:46:36.000+00:00').table("test_db.toronto_events_transformed2")
 -- MAGIC
 -- MAGIC df1.count()
 -- MAGIC
@@ -135,7 +135,7 @@
 -- MAGIC --RESTORE TABLE test_db.toronto_events_transformed2 TO TIMESTAMP AS OF '2022-08-02 00:00:00';
 -- MAGIC
 -- MAGIC -- Restore the employee table to a specific version number retrieved from DESCRIBE HISTORY employee
--- MAGIC RESTORE TABLE test_db.toronto_events_transformed2 TO VERSION AS OF 0;
+-- MAGIC RESTORE TABLE test_db.toronto_events_transformed2 TO VERSION AS OF 5;
 -- MAGIC DESCRIBE HISTORY test_db.toronto_events_transformed2
 -- MAGIC
 -- MAGIC -- Restore the employee table to the state it was in an hour ago
