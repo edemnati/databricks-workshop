@@ -122,6 +122,44 @@
 
 -- COMMAND ----------
 
+-- MAGIC %python
+-- MAGIC # Azure storage access info
+-- MAGIC blob_account_name = "azureopendatastorage"
+-- MAGIC blob_container_name = "nyctlc"
+-- MAGIC blob_relative_path = "yellow"
+-- MAGIC blob_sas_token = "r"
+-- MAGIC
+-- MAGIC # Allow SPARK to read from Blob remotely
+-- MAGIC wasbs_path = 'wasbs://%s@%s.blob.core.windows.net/%s' % (blob_container_name, blob_account_name, blob_relative_path)
+-- MAGIC spark.conf.set(
+-- MAGIC   'fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),
+-- MAGIC   blob_sas_token)
+-- MAGIC print('Remote blob path: ' + wasbs_path)
+-- MAGIC
+-- MAGIC #Check storage content
+-- MAGIC #display(dbutils.fs.ls("wasbs://nyctlc@azureopendatastorage.blob.core.windows.net"))
+-- MAGIC
+-- MAGIC # SPARK read parquet, note that it won't load any data yet by now
+-- MAGIC df = spark.read.parquet(wasbs_path)
+-- MAGIC print('Register the DataFrame as a SQL temporary view: source')
+-- MAGIC df.createOrReplaceTempView('source')
+-- MAGIC
+-- MAGIC # Display top 10 rows
+-- MAGIC print('Displaying top 10 rows: ')
+-- MAGIC display(spark.sql('SELECT * FROM source LIMIT 10'))
+
+-- COMMAND ----------
+
+-- MAGIC %python
+-- MAGIC import pandas as pd
+-- MAGIC
+-- MAGIC pdf = pd.read_csv("https://raw.githubusercontent.com/edemnati/databricks-workshop/main/datasets/daily-bike-share.csv")
+-- MAGIC
+-- MAGIC df = spark.createDataFrame(pdf)
+-- MAGIC display(df)
+
+-- COMMAND ----------
+
 -- MAGIC %sql
 -- MAGIC /* Preview your data */
 -- MAGIC SELECT * FROM read_files("dbfs:/mnt/my_lake/NYCTripSmall.parquet") LIMIT 10

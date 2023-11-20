@@ -256,6 +256,31 @@ df_json.display()
 
 # COMMAND ----------
 
+# MAGIC %python
+# MAGIC # Azure storage access info
+# MAGIC blob_account_name = "azureopendatastorage"
+# MAGIC blob_container_name = "nyctlc"
+# MAGIC blob_relative_path = "yellow"
+# MAGIC blob_sas_token = "r"
+# MAGIC
+# MAGIC # Allow SPARK to read from Blob remotely
+# MAGIC wasbs_path = 'wasbs://%s@%s.blob.core.windows.net/%s' % (blob_container_name, blob_account_name, blob_relative_path)
+# MAGIC spark.conf.set(
+# MAGIC   'fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),
+# MAGIC   blob_sas_token)
+# MAGIC print('Remote blob path: ' + wasbs_path)
+# MAGIC
+# MAGIC # SPARK read parquet, note that it won't load any data yet by now
+# MAGIC df = spark.read.parquet(wasbs_path)
+# MAGIC print('Register the DataFrame as a SQL temporary view: source')
+# MAGIC df.createOrReplaceTempView('source')
+# MAGIC
+# MAGIC # Display top 10 rows
+# MAGIC print('Displaying top 10 rows: ')
+# MAGIC display(spark.sql('SELECT * FROM source LIMIT 10'))
+
+# COMMAND ----------
+
 df_parquet = (spark.read
                .parquet("dbfs:/FileStore/datasets/NYCTripSmall.parquet")
               )

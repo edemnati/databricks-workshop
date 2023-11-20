@@ -7,14 +7,53 @@
 -- MAGIC %python
 -- MAGIC
 -- MAGIC import pyspark.sql.functions as f
+-- MAGIC import requests
+-- MAGIC import json
+-- MAGIC #Read data
+-- MAGIC URL="https://secure.toronto.ca/cc_sr_v1/data/edc_eventcal_APR?limit=500"
+-- MAGIC
+-- MAGIC result = requests.get(URL).json()
 -- MAGIC
 -- MAGIC # Create a test table
--- MAGIC df_table=spark.read.format("delta").load("dbfs:/FileStore/datasets/toronto_events_transformed2")
+-- MAGIC df_table = spark.read.json(sc.parallelize([json.dumps(result)]))
 -- MAGIC
--- MAGIC df_table.write.option("mergeSchema", "true").mode("overwrite").saveAsTable("test_db.toronto_events_test")
+-- MAGIC # Create a test table
+-- MAGIC #df_table=spark.read.format("delta").load("dbfs:/FileStore/datasets/toronto_events_transformed2")
+-- MAGIC mount_point = "/mnt/my_lake"
+-- MAGIC (df_table
+-- MAGIC     .write
+-- MAGIC     .format("json")
+-- MAGIC     .mode('overwrite')
+-- MAGIC     .option("overwriteSchema", "true")
+-- MAGIC     .save(f"{mount_point}/tc_workshop/toronto_events_raw.json")
+-- MAGIC )
+-- MAGIC
+-- MAGIC
+
+-- COMMAND ----------
+
+CREATE TABLE IF NOT EXISTS test_db.toronto_events_raw_delta;
+
+ ALTER TABLE test_db.toronto_events_raw_delta SET TBLPROPERTIES (
+    'delta.minReaderVersion' = '2',
+    'delta.minWriterVersion' = '5',
+    'delta.columnMapping.mode' = 'name'
+  );
+
+COPY INTO test_db.toronto_events_raw_delta
+FROM '/mnt/my_lake/tc_workshop/toronto_events_raw.json' 
+FILEFORMAT = JSON
+FORMAT_OPTIONS('header'='true','inferSchema'='True')
+COPY_OPTIONS ('mergeSchema' = 'true');
+
+-- COMMAND ----------
+
+-- MAGIC %python
 -- MAGIC
 -- MAGIC #Create new DataFrame to test merge statement
--- MAGIC df_new_data = (spark.read.format("delta").load("dbfs:/FileStore/datasets/toronto_events_transformed2")
+-- MAGIC df_new_data = (spark.read.json(sc.parallelize([json.dumps(result)]))
+-- MAGIC                #spark.read.format("delta").load("dbfs:/FileStore/datasets/toronto_events_transformed2")
+-- MAGIC                    .select("calEvent.*")
 -- MAGIC                    .where("eventName like '%Raptor%'")
 -- MAGIC                    .withColumn('startDate',f.date_add("startDate",365))
 -- MAGIC                    .withColumn('endDate',f.date_add("endDate",365))
@@ -29,7 +68,6 @@
 -- MAGIC
 -- MAGIC df_new_data.createOrReplaceTempView("df_new_data")
 -- MAGIC display(df_new_data)
--- MAGIC
 
 -- COMMAND ----------
 

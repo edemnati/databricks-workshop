@@ -23,14 +23,15 @@
 -- MAGIC Save transformed data
 -- MAGIC
 -- MAGIC __pyspark SQL functions__
--- MAGIC https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/functions.html
+-- MAGIC - https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/functions.html
+-- MAGIC
+-- MAGIC - https://learn.microsoft.com/en-us/azure/databricks/sql/language-manual/sql-ref-functions#sql-and-python-user-defined-functions
 -- MAGIC
 -- MAGIC __Delta Lake Cheat sheet__
--- MAGIC https://pages.databricks.com/rs/094-YMS-629/images/Delta%20Lake%20Cheat%20Sheet.pdf
+-- MAGIC - https://pages.databricks.com/rs/094-YMS-629/images/Delta%20Lake%20Cheat%20Sheet.pdf
 
 -- COMMAND ----------
 
--- DBTITLE 1,Read data
 -- MAGIC %python
 -- MAGIC import requests
 -- MAGIC import json
@@ -91,7 +92,7 @@ CREATE TABLE IF NOT EXISTS test_db.toronto_events_raw_delta;
   );
 
 COPY INTO test_db.toronto_events_raw_delta
-FROM '/mnt/my_lake2/td_workshop/toronto_events_raw.json' 
+FROM '/mnt/my_lake2/tc_workshop/toronto_events_raw.json' 
 FILEFORMAT = JSON
 FORMAT_OPTIONS('header'='true','inferSchema'='true')
 COPY_OPTIONS ('mergeSchema' = 'true');
@@ -99,13 +100,26 @@ COPY_OPTIONS ('mergeSchema' = 'true');
 -- COMMAND ----------
 
 --Write a SQL query to: Select events that contain more than one row (observation)
+select calEvent.eventName, count(*) as ct
+from test_db.toronto_events_raw_delta
+group by calEvent.eventName
+having ct >1
 
 
 -- COMMAND ----------
 
+select explode(calEvent.category.name) as event_category 
+      from test_db.toronto_events_raw_delta
+
+-- COMMAND ----------
+
 --Write a SQL query to: count the number of events per category 
-
-
+select event_category,count(*) as ct
+from (select explode(calEvent.category.name) as event_category 
+      from test_db.toronto_events_raw_delta
+      )
+group by  event_category
+order by ct desc
 
 -- COMMAND ----------
 
@@ -122,8 +136,16 @@ Data transformation
 4. Save as a new table called: toronto_events_dataset
 */
 
+create table if not exists test_db.toronto_events_dataset_new
+as 
+select eventName,category.name,locations.locationName,shortDescription,startDate,endDate,
+    freeEvent,frequency,cost,event_dates.*
+from (
+        select calEvent.*,explode(calEvent.dates) as event_dates
+        from test_db.toronto_events_raw_delta
+    );
 
-
+select count(*) from test_db.toronto_events_dataset_new
 
 -- COMMAND ----------
 
