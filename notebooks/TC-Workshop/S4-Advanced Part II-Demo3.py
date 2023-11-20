@@ -56,10 +56,10 @@ spark.conf.set('latest_update.id', latest_update_id)
 
 # DBTITLE 1,Audit log
 # MAGIC %sql
-# MAGIC SELECT timestamp, details:user_action:action, details:user_action:user_name ,origin.update_id
+# MAGIC SELECT timestamp, details:user_action:action, details:user_action:user_name ,origin.update_id,*
 # MAGIC FROM event_log_raw 
 # MAGIC WHERE event_type = 'user_action'
-# MAGIC --and origin.update_id = '${latest_update.id}'
+# MAGIC and origin.update_id = '${latest_update.id}'
 # MAGIC order by timestamp desc
 # MAGIC
 

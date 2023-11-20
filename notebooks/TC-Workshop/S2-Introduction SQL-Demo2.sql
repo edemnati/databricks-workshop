@@ -1,12 +1,15 @@
 -- Databricks notebook source
 -- MAGIC %md
 -- MAGIC ## Read Data
+-- MAGIC
+-- MAGIC __Run the following python code to prepare the data for the lab__
 
 -- COMMAND ----------
 
 -- MAGIC %python
 -- MAGIC
 -- MAGIC import pyspark.sql.functions as f
+-- MAGIC from pyspark.sql.window import Window
 -- MAGIC import requests
 -- MAGIC import json
 -- MAGIC #Read data
@@ -29,31 +32,44 @@
 -- MAGIC )
 -- MAGIC
 -- MAGIC
-
--- COMMAND ----------
-
-CREATE TABLE IF NOT EXISTS test_db.toronto_events_raw_delta;
-
- ALTER TABLE test_db.toronto_events_raw_delta SET TBLPROPERTIES (
-    'delta.minReaderVersion' = '2',
-    'delta.minWriterVersion' = '5',
-    'delta.columnMapping.mode' = 'name'
-  );
-
-COPY INTO test_db.toronto_events_raw_delta
-FROM '/mnt/my_lake/tc_workshop/toronto_events_raw.json' 
-FILEFORMAT = JSON
-FORMAT_OPTIONS('header'='true','inferSchema'='True')
-COPY_OPTIONS ('mergeSchema' = 'true');
-
--- COMMAND ----------
-
--- MAGIC %python
+-- MAGIC #Flatten dataset
+-- MAGIC df_flatten = (df_table
+-- MAGIC                 .select("calEvent.*")
+-- MAGIC                 .select(f.explode("dates").alias("event_dates"),"*")
+-- MAGIC                 .select(f.explode("locations").alias("event_location"),"*")
+-- MAGIC                 .select("eventName",
+-- MAGIC                          f.col("category.name").alias("event_category"),
+-- MAGIC                          f.col("event_dates.description").alias("event_description"),
+-- MAGIC                          "shortDescription",
+-- MAGIC                          "startDate","endDate",
+-- MAGIC                          "event_location.locationName",
+-- MAGIC                          "freeEvent","frequency",
+-- MAGIC                          "cost",
+-- MAGIC                          "expectedAvg",
+-- MAGIC                          "event_dates.allDay",
+-- MAGIC                          "event_dates.startDateTime",
+-- MAGIC                          "event_dates.endDateTime"
+-- MAGIC                         )
+-- MAGIC              ) 
+-- MAGIC
+-- MAGIC #Transform dataset
+-- MAGIC df_flatten_transformed = (df_flatten
+-- MAGIC                           .dropDuplicates()
+-- MAGIC                           .withColumn("event_start_dayofweek",f.dayofweek("startDateTime"))
+-- MAGIC                           .withColumn("event_start_dayofyear",f.dayofyear("startDateTime"))
+-- MAGIC                                               .withColumn("event_date_id",
+-- MAGIC                                                           f.row_number().over(Window.partitionBy(["eventName"])
+-- MAGIC                                                                         .orderBy(f.col("startDateTime").asc())
+-- MAGIC                                                                              )
+-- MAGIC                                                          )
+-- MAGIC                          )             
+-- MAGIC
+-- MAGIC #df_flatten_transformed.createOrReplaceTempView("toronto_events_test")
+-- MAGIC df_flatten_transformed.write.option("mergeSchema", "true").mode("overwrite").saveAsTable("tbl_toronto_events_test")
+-- MAGIC
 -- MAGIC
 -- MAGIC #Create new DataFrame to test merge statement
--- MAGIC df_new_data = (spark.read.json(sc.parallelize([json.dumps(result)]))
--- MAGIC                #spark.read.format("delta").load("dbfs:/FileStore/datasets/toronto_events_transformed2")
--- MAGIC                    .select("calEvent.*")
+-- MAGIC df_new_data = (df_flatten_transformed
 -- MAGIC                    .where("eventName like '%Raptor%'")
 -- MAGIC                    .withColumn('startDate',f.date_add("startDate",365))
 -- MAGIC                    .withColumn('endDate',f.date_add("endDate",365))
@@ -73,7 +89,7 @@ COPY_OPTIONS ('mergeSchema' = 'true');
 
 -- MAGIC %sql
 -- MAGIC select count(*)
--- MAGIC from test_db.toronto_events_test
+-- MAGIC from tbl_toronto_events_test
 
 -- COMMAND ----------
 
@@ -87,7 +103,7 @@ COPY_OPTIONS ('mergeSchema' = 'true');
 -- MAGIC /*
 -- MAGIC Write sql command to merge the new DataFrame to the saved table
 -- MAGIC */
--- MAGIC MERGE INTO test_db.toronto_events_transformed2 as t1
+-- MAGIC MERGE INTO tbl_toronto_events_test as t1
 -- MAGIC USING df_new_data as t2
 -- MAGIC ON t1.eventName = t2.eventName and t1.startDateTime = t2.startDateTime
 -- MAGIC WHEN MATCHED THEN
@@ -136,23 +152,23 @@ COPY_OPTIONS ('mergeSchema' = 'true');
 
 -- MAGIC %sql
 -- MAGIC -- Show table history (versioning)
--- MAGIC DESCRIBE HISTORY test_db.toronto_events_transformed2
+-- MAGIC DESCRIBE HISTORY tbl_toronto_events_test
 
 -- COMMAND ----------
 
 -- DBTITLE 1,Versions
 -- MAGIC %sql
 -- MAGIC -- Count rows for each version
--- MAGIC SELECT 5 as version, count(*) as ct FROM test_db.toronto_events_transformed2 VERSION AS OF 5
+-- MAGIC SELECT 0 as version, count(*) as ct FROM tbl_toronto_events_test VERSION AS OF 0
 -- MAGIC UNION ALL
--- MAGIC SELECT 10 as version, count(*) as ct FROM test_db.toronto_events_transformed2 VERSION AS OF 10
+-- MAGIC SELECT 1 as version, count(*) as ct FROM tbl_toronto_events_test VERSION AS OF 1
 
 -- COMMAND ----------
 
 -- DBTITLE 1,Time Travel
 -- MAGIC %sql
 -- MAGIC --select version at of timestamp
--- MAGIC SELECT * FROM test_db.toronto_events_transformed2 TIMESTAMP AS OF '2023-11-13'
+-- MAGIC SELECT * FROM tbl_toronto_events_test TIMESTAMP AS OF '2023-11-20T21:01:40'
 -- MAGIC limit 100
 
 -- COMMAND ----------
@@ -160,7 +176,7 @@ COPY_OPTIONS ('mergeSchema' = 'true');
 -- DBTITLE 1,Time Travel
 -- MAGIC %python
 -- MAGIC #select version at of timestamp
--- MAGIC df1 = spark.read.format('delta').option('timestampAsOf', '2023-11-16T18:46:36.000+00:00').table("test_db.toronto_events_transformed2")
+-- MAGIC df1 = spark.read.format('delta').option('timestampAsOf', '2023-11-20T21:01:40').table("tbl_toronto_events_test")
 -- MAGIC
 -- MAGIC df1.count()
 -- MAGIC
@@ -173,8 +189,8 @@ COPY_OPTIONS ('mergeSchema' = 'true');
 -- MAGIC --RESTORE TABLE test_db.toronto_events_transformed2 TO TIMESTAMP AS OF '2022-08-02 00:00:00';
 -- MAGIC
 -- MAGIC -- Restore the employee table to a specific version number retrieved from DESCRIBE HISTORY employee
--- MAGIC RESTORE TABLE test_db.toronto_events_transformed2 TO VERSION AS OF 5;
--- MAGIC DESCRIBE HISTORY test_db.toronto_events_transformed2
+-- MAGIC RESTORE TABLE tbl_toronto_events_test TO VERSION AS OF 0;
+-- MAGIC DESCRIBE HISTORY tbl_toronto_events_test
 -- MAGIC
 -- MAGIC -- Restore the employee table to the state it was in an hour ago
 -- MAGIC --RESTORE TABLE test_db.toronto_events_transformed2 TO TIMESTAMP AS OF current_timestamp() - INTERVAL '1' HOUR;
@@ -184,16 +200,16 @@ COPY_OPTIONS ('mergeSchema' = 'true');
 -- DBTITLE 1,Cache
 -- MAGIC %sql
 -- MAGIC --Cache subset of table
--- MAGIC CACHE SELECT * FROM test_db.toronto_events_transformed2 where eventName like '%Raptor%'
+-- MAGIC CACHE SELECT * FROM tbl_toronto_events_test where eventName like '%Raptor%'
 
 -- COMMAND ----------
 
 -- DBTITLE 1,Clone
 -- MAGIC %sql
 -- MAGIC --Clone table
--- MAGIC CREATE OR REPLACE TABLE test_db.toronto_events_clone CLONE test_db.toronto_events_transformed2;
+-- MAGIC CREATE OR REPLACE TABLE tbl_toronto_events_clone CLONE tbl_toronto_events_test;
 -- MAGIC
--- MAGIC select count(*) from test_db.toronto_events_clone
+-- MAGIC select count(*) from tbl_toronto_events_clone
 
 -- COMMAND ----------
 
