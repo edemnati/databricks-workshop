@@ -87,7 +87,7 @@
 # DBTITLE 1,Read data with pandas
 import pandas as pd
 
-pdf = pd.read_csv("/dbfs/FileStore/datasets/daily_bike_share.csv")
+pdf = pd.read_csv("/Workspace/Repos/ezzatdemnati@microsoft.com/databricks-workshop/datasets/daily-bike-share.csv")
 pdf.head()
 
 
@@ -112,8 +112,8 @@ pdf2.head()
 
 # DBTITLE 1,Leverage Spark pandas API
 import pyspark.pandas as ps
-
-ps_df = ps.read_csv("dbfs:/FileStore/datasets/daily_bike_share.csv")
+#"file:/Workspace/Repos/ezzatdemnati@microsoft.com/databricks-workshop/datasets/daily-bike-share.csv"
+ps_df = ps.read_csv("file:/Workspace/Repos/ezzatdemnati@microsoft.com/databricks-workshop/datasets/daily-bike-share.csv")
 ps_df.head()
 
 
@@ -134,6 +134,11 @@ display(dbutils.fs.ls('/databricks-datasets'))
 
 # COMMAND ----------
 
+
+
+# COMMAND ----------
+
+# DBTITLE 1,test
 # MAGIC %sql
 # MAGIC --SHOW SCHEMAS IN samples
 # MAGIC SHOW TABLES IN samples.tpch
@@ -150,7 +155,7 @@ display(dbutils.fs.ls('/databricks-datasets'))
 
 #spark.read.table("<catalog_name>.<schema_name>.<table_name>")
 df = spark.read.table("samples.tpch.orders")
-
+h
 display(df)
 
 # COMMAND ----------
@@ -172,12 +177,16 @@ In the PERMISSIVE mode it is possible to inspect the rows that could not be pars
    - You can add the column _corrupt_record to the schema provided to the DataFrameReader to review corrupt records in the resultant DataFrame.
 
 """
+
+#spark.read.csv("dbfs:/FileStore/datasets/daily_bike_share_corrupted.csv")
+
 test_df = (spark.read
               .format("csv")
               .options(header='true', inferSchema='true')
               #.option("mode", "PERMISSIVE")
               .option("badRecordsPath", "/FileStore/tables/badRecordsPath")
-              .load("dbfs:/FileStore/datasets/daily_bike_share_corrupted.csv")
+              #.load("dbfs:/FileStore/datasets/daily_bike_share_corrupted.csv")
+              .load("file:/Workspace/Repos/ezzatdemnati@microsoft.com/databricks-workshop/datasets/daily-bike-share_corrupted.csv")
               #.load("/databricks-datasets/Rdatasets/data-001/csv/ggplot2/diamonds.csv")
               )
 display(test_df)
@@ -219,7 +228,7 @@ myschema = StructType(
 test_df2 = (spark.read
               .format("csv")
               .schema(myschema)
-              .options(header='true', inferSchema='true')
+              .options(header='true')
               .option("mode", "DROPMALFORMED")
               .load("dbfs:/FileStore/datasets/daily_bike_share_corrupted.csv")              
               )
@@ -238,14 +247,14 @@ import pyspark.sql.functions as f
 df_json = (spark.read.format("json")
            #.load("dbfs:/FileStore/datasets/test_json.json")
            #.option("multiline", "true") #set to true for multiline json files, set to false otherwise
-           #.load("dbfs:/FileStore/datasets/test_json_array.json")
-           
+           #.load("dbfs:/FileStore/datasets/test_json_array.json")           
            .load("dbfs:/FileStore/datasets/test_json_array_nested.json")
-           #.select("*",f.explode("d"))
-           #.drop("d")
-           #.select("*","col.*")
-           #drop("col")           
+           .select("*",f.explode("d"))
+           .drop("d")
+           .select("*","col.*")
+           .drop("col")           
           )
+
 df_json.display()
 #df_json.select(("calEvent.*")).display()
 
@@ -273,7 +282,7 @@ df_parquet.display()
 test_df.printSchema()
 print(F"count: {test_df.count()}")
 test_df.show(100, truncate=False) #show more lines, do not truncate
-test_df.display()
+display(test_df)
 
 
 # COMMAND ----------
@@ -285,8 +294,8 @@ test_df.summary().display()
 # COMMAND ----------
 
 # DBTITLE 1,Data profiling
-display(test_df)
-#dbutils.data.summarize(test_df)
+#display(test_df)
+dbutils.data.summarize(test_df)
 
 # COMMAND ----------
 
@@ -305,7 +314,7 @@ display(test_df)
 # COMMAND ----------
 
 # DBTITLE 1,Filter rows based on conditions
-test_df.filter(test_df.windspeed<0.19).count()
+#test_df.filter(test_df.windspeed<0.19).count()
 #or
 test_df.filter("windspeed<0.19").count()
 
@@ -372,13 +381,22 @@ display(df_nested_flattened.selectExpr("a", "upper(Country) as UPP_Country"))
 
 # DBTITLE 1,Select observation using sql query
 (df_nested_flattened.write
- #.mode("overwrite")
+ .mode("overwrite")
  .saveAsTable("test_table") 
 )
 
 query_df = spark.sql("SELECT * FROM test_table")
 
 display(query_df)
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC 
+# MAGIC SELECT * FROM test_table
+# MAGIC where 
+# MAGIC group by 
+# MAGIC order by 
 
 # COMMAND ----------
 
@@ -399,7 +417,7 @@ display(joined_df)
 
 unioned_df = (df_nested_flattened.select("a","b","c")
               .union(df2.select("a","b","c"))
-              #.distinct()
+              .distinct()
              )
 display(unioned_df)
 
@@ -407,6 +425,12 @@ display(unioned_df)
 
 # MAGIC %md
 # MAGIC ## Save data
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC 
+# MAGIC create database if not exists test_db
 
 # COMMAND ----------
 
