@@ -1,8 +1,8 @@
 -- Databricks notebook source
 -- MAGIC %md # Delta Live Tables quickstart (SQL)
--- MAGIC 
+-- MAGIC
 -- MAGIC A notebook that provides an example Delta Live Tables pipeline to:
--- MAGIC 
+-- MAGIC
 -- MAGIC - Read raw JSON clickstream data into a table.
 -- MAGIC - Read records from the raw data table and use a Delta Live Tables query and expectations to create a new table with cleaned and prepared data.
 -- MAGIC - Perform an analysis on the prepared data with a Delta Live Tables query.

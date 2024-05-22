@@ -87,9 +87,8 @@
 
 -- COMMAND ----------
 
--- MAGIC %sql
--- MAGIC select count(*)
--- MAGIC from tbl_toronto_events_test
+select count(*)
+from tbl_toronto_events_test
 
 -- COMMAND ----------
 
@@ -99,77 +98,73 @@
 
 -- COMMAND ----------
 
--- MAGIC %sql
--- MAGIC /*
--- MAGIC Write sql command to merge the new DataFrame to the saved table
--- MAGIC */
--- MAGIC MERGE INTO tbl_toronto_events_test as t1
--- MAGIC USING df_new_data as t2
--- MAGIC ON t1.eventName = t2.eventName and t1.startDateTime = t2.startDateTime
--- MAGIC WHEN MATCHED THEN
--- MAGIC   UPDATE SET
--- MAGIC     event_description = t2.event_description
--- MAGIC     
--- MAGIC WHEN NOT MATCHED
--- MAGIC   THEN INSERT (
--- MAGIC    eventName,
--- MAGIC    event_category,
--- MAGIC    event_description,
--- MAGIC    shortDescription,
--- MAGIC    startDate,
--- MAGIC    endDate,
--- MAGIC    locationName,
--- MAGIC    freeEvent,
--- MAGIC    frequency,
--- MAGIC    cost,
--- MAGIC    expectedAvg,
--- MAGIC    allDay,
--- MAGIC    startDateTime,
--- MAGIC    event_start_dayofweek,
--- MAGIC    event_start_dayofyear,
--- MAGIC    event_date_id
--- MAGIC   )
--- MAGIC   VALUES (
--- MAGIC    t2.eventName,
--- MAGIC    t2.event_category,
--- MAGIC    t2.event_description,
--- MAGIC    t2.shortDescription,
--- MAGIC    t2.startDate,
--- MAGIC    t2.endDate,
--- MAGIC    t2.locationName,
--- MAGIC    t2.freeEvent,
--- MAGIC    t2.frequency,
--- MAGIC    t2.cost,
--- MAGIC    t2.expectedAvg,
--- MAGIC    t2.allDay,
--- MAGIC    t2.startDateTime,
--- MAGIC    t2.event_start_dayofweek,
--- MAGIC    t2.event_start_dayofyear,
--- MAGIC    t2.event_date_id
--- MAGIC   )
+/*
+Write sql command to merge the new DataFrame to the saved table
+*/
+MERGE INTO tbl_toronto_events_test as t1
+USING df_new_data as t2
+ON t1.eventName = t2.eventName and t1.startDateTime = t2.startDateTime
+WHEN MATCHED THEN
+  UPDATE SET
+    event_description = t2.event_description
+    
+WHEN NOT MATCHED
+  THEN INSERT (
+   eventName,
+   event_category,
+   event_description,
+   shortDescription,
+   startDate,
+   endDate,
+   locationName,
+   freeEvent,
+   frequency,
+   cost,
+   expectedAvg,
+   allDay,
+   startDateTime,
+   event_start_dayofweek,
+   event_start_dayofyear,
+   event_date_id
+  )
+  VALUES (
+   t2.eventName,
+   t2.event_category,
+   t2.event_description,
+   t2.shortDescription,
+   t2.startDate,
+   t2.endDate,
+   t2.locationName,
+   t2.freeEvent,
+   t2.frequency,
+   t2.cost,
+   t2.expectedAvg,
+   t2.allDay,
+   t2.startDateTime,
+   t2.event_start_dayofweek,
+   t2.event_start_dayofyear,
+   t2.event_date_id
+  )
 
 -- COMMAND ----------
 
--- MAGIC %sql
--- MAGIC -- Show table history (versioning)
--- MAGIC DESCRIBE HISTORY tbl_toronto_events_test
+-- Show table history (versioning)
+DESCRIBE HISTORY tbl_toronto_events_test
 
 -- COMMAND ----------
 
 -- DBTITLE 1,Versions
--- MAGIC %sql
--- MAGIC -- Count rows for each version
--- MAGIC SELECT 0 as version, count(*) as ct FROM tbl_toronto_events_test VERSION AS OF 0
--- MAGIC UNION ALL
--- MAGIC SELECT 1 as version, count(*) as ct FROM tbl_toronto_events_test VERSION AS OF 1
+-- Count rows for each version
+SELECT 0 as version, count(*) as ct FROM tbl_toronto_events_test VERSION AS OF 0
+UNION ALL
+SELECT 1 as version, count(*) as ct FROM tbl_toronto_events_test VERSION AS OF 1
 
 -- COMMAND ----------
 
 -- DBTITLE 1,Time Travel
--- MAGIC %sql
--- MAGIC --select version at of timestamp
--- MAGIC SELECT * FROM tbl_toronto_events_test TIMESTAMP AS OF '2023-11-20T21:01:40'
--- MAGIC limit 100
+--select version at of timestamp
+SELECT * FROM tbl_toronto_events_test TIMESTAMP AS OF '2023-11-20T21:01:40'
+limit 100
 
 -- COMMAND ----------
 
@@ -184,39 +179,35 @@
 -- COMMAND ----------
 
 -- DBTITLE 1,Restore
--- MAGIC %sql
--- MAGIC -- Restore table to a specific timestamp
--- MAGIC --RESTORE TABLE test_db.toronto_events_transformed2 TO TIMESTAMP AS OF '2022-08-02 00:00:00';
--- MAGIC
--- MAGIC -- Restore the employee table to a specific version number retrieved from DESCRIBE HISTORY employee
--- MAGIC RESTORE TABLE tbl_toronto_events_test TO VERSION AS OF 0;
--- MAGIC DESCRIBE HISTORY tbl_toronto_events_test
--- MAGIC
--- MAGIC -- Restore the employee table to the state it was in an hour ago
--- MAGIC --RESTORE TABLE test_db.toronto_events_transformed2 TO TIMESTAMP AS OF current_timestamp() - INTERVAL '1' HOUR;
+-- Restore table to a specific timestamp
+--RESTORE TABLE test_db.toronto_events_transformed2 TO TIMESTAMP AS OF '2022-08-02 00:00:00';
+
+-- Restore the employee table to a specific version number retrieved from DESCRIBE HISTORY employee
+RESTORE TABLE tbl_toronto_events_test TO VERSION AS OF 0;
+DESCRIBE HISTORY tbl_toronto_events_test
+
+-- Restore the employee table to the state it was in an hour ago
+--RESTORE TABLE test_db.toronto_events_transformed2 TO TIMESTAMP AS OF current_timestamp() - INTERVAL '1' HOUR;
 
 -- COMMAND ----------
 
 -- DBTITLE 1,Cache
--- MAGIC %sql
--- MAGIC --Cache subset of table
--- MAGIC CACHE SELECT * FROM tbl_toronto_events_test where eventName like '%Raptor%'
+--Cache subset of table
+CACHE SELECT * FROM tbl_toronto_events_test where eventName like '%Raptor%'
 
 -- COMMAND ----------
 
 -- DBTITLE 1,Clone
--- MAGIC %sql
--- MAGIC --Clone table
--- MAGIC CREATE OR REPLACE TABLE tbl_toronto_events_clone CLONE tbl_toronto_events_test;
--- MAGIC
--- MAGIC select count(*) from tbl_toronto_events_clone
+--Clone table
+CREATE OR REPLACE TABLE tbl_toronto_events_clone CLONE tbl_toronto_events_test;
+
+select count(*) from tbl_toronto_events_clone
 
 -- COMMAND ----------
 
 -- DBTITLE 1,Convert to Delta
--- MAGIC %sql
--- MAGIC --Convert table to delta format
--- MAGIC CONVERT TO DELTA database_name.table_name; -- only for Parquet tables
--- MAGIC
--- MAGIC CONVERT TO DELTA parquet.`abfss://container-name@storage-account-name.dfs.core.windows.net/path/to/table`
--- MAGIC   PARTITIONED BY (date DATE); -- if the table is partitioned
+--Convert table to delta format
+CONVERT TO DELTA database_name.table_name; -- only for Parquet tables
+
+CONVERT TO DELTA parquet.`abfss://container-name@storage-account-name.dfs.core.windows.net/path/to/table`
+  PARTITIONED BY (date DATE); -- if the table is partitioned

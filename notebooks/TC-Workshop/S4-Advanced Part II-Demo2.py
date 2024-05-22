@@ -19,10 +19,6 @@
 
 # COMMAND ----------
 
-
-
-# COMMAND ----------
-
 #Read synapse data from Databricks: https://learn.microsoft.com/en-us/azure/databricks/external-data/synapse-analytics
 # The Azure Synapse connector does not delete the temporary files that it creates in the Azure storage container. Databricks recommends that you periodically delete temporary files under the user-supplied tempDir location.
 #https://learn.microsoft.com/en-us/azure/databricks/external-data/sql-server
@@ -47,7 +43,7 @@ synapse_dedicated_pool_cs = "ez-az-synapse-test.sql.azuresynapse.net"
 df = (spark.read 
       .format("com.databricks.spark.sqldw") 
       .option("url", jdbc_cs_sql_pwd) 
-      .option("tempDir", f"abfss://{container_name}@{storage_account_name}.dfs.core.windows.net/temp_synapse_dbx_tc") 
+      .option("tempDir", f"abfss://{container_name}@{storage_account_name}.dfs.core.windows.net/temp_synapse_dbx_tc_4") 
       .option("forwardSparkAzureStorageCredentials", "true") 
       .option("dbTable", "dbo.NYCTaxiTripSmall") 
     ).load() 
@@ -80,7 +76,7 @@ display(df_agg)
       .format("com.databricks.spark.sqldw") 
       .option("url", jdbc_cs_sql_pwd) 
       .option("forwardSparkAzureStorageCredentials", "true")            
-      .option("dbTable", "dbo.NYCTaxiTripSmall_agg_new_tc") 
+      .option("dbTable", "dbo.NYCTaxiTripSmall_agg_new_tc_3") 
       .mode("overwrite")
       .option("tempDir", f"abfss://{container_name}@{storage_account_name}.dfs.core.windows.net/temp_synapse_dbx") 
      .save()
@@ -95,4 +91,8 @@ df_agg.createOrReplaceTempView("df_agg")
 
 # MAGIC %sql
 # MAGIC
-# MAGIC select * from df_agg
+# MAGIC select * from df_agg where PaymentType = 'DIS'
+
+# COMMAND ----------
+
+

@@ -219,7 +219,7 @@ test_df2 = (spark.read
               .format("csv")
               .schema(myschema)
               .options(header='true', inferSchema='true')
-              .option("mode", "DROPMALFORMED")
+              .option("mode", "PERMISSIVE")
               .load("dbfs:/FileStore/datasets/daily_bike_share_corrupted.csv")              
               )
 display(test_df2)
@@ -240,9 +240,9 @@ df_json = (spark.read.format("json")
            #.load("dbfs:/FileStore/datasets/test_json_array.json")
            
            .load("dbfs:/FileStore/datasets/test_json_array_nested.json")
-           #.select("*",f.explode("d"))
-           #.drop("d")
-           #.select("*","col.*")
+           .select("*",f.explode("d"))
+           .drop("d")
+           .select("*","col.*")
            #drop("col")           
           )
 df_json.display()
@@ -256,28 +256,27 @@ df_json.display()
 
 # COMMAND ----------
 
-# MAGIC %python
-# MAGIC # Azure storage access info
-# MAGIC blob_account_name = "azureopendatastorage"
-# MAGIC blob_container_name = "nyctlc"
-# MAGIC blob_relative_path = "yellow"
-# MAGIC blob_sas_token = "r"
-# MAGIC
-# MAGIC # Allow SPARK to read from Blob remotely
-# MAGIC wasbs_path = 'wasbs://%s@%s.blob.core.windows.net/%s' % (blob_container_name, blob_account_name, blob_relative_path)
-# MAGIC spark.conf.set(
-# MAGIC   'fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),
-# MAGIC   blob_sas_token)
-# MAGIC print('Remote blob path: ' + wasbs_path)
-# MAGIC
-# MAGIC # SPARK read parquet, note that it won't load any data yet by now
-# MAGIC df = spark.read.parquet(wasbs_path)
-# MAGIC print('Register the DataFrame as a SQL temporary view: source')
-# MAGIC df.createOrReplaceTempView('source')
-# MAGIC
-# MAGIC # Display top 10 rows
-# MAGIC print('Displaying top 10 rows: ')
-# MAGIC display(spark.sql('SELECT * FROM source LIMIT 10'))
+# Azure storage access info
+blob_account_name = "azureopendatastorage"
+blob_container_name = "nyctlc"
+blob_relative_path = "yellow"
+blob_sas_token = "r"
+
+# Allow SPARK to read from Blob remotely
+wasbs_path = 'wasbs://%s@%s.blob.core.windows.net/%s' % (blob_container_name, blob_account_name, blob_relative_path)
+spark.conf.set(
+  'fs.azure.sas.%s.%s.blob.core.windows.net' % (blob_container_name, blob_account_name),
+  blob_sas_token)
+print('Remote blob path: ' + wasbs_path)
+
+# SPARK read parquet, note that it won't load any data yet by now
+df = spark.read.parquet(wasbs_path)
+print('Register the DataFrame as a SQL temporary view: source')
+df.createOrReplaceTempView('source')
+
+# Display top 10 rows
+print('Displaying top 10 rows: ')
+display(spark.sql('SELECT * FROM source LIMIT 10'))
 
 # COMMAND ----------
 
@@ -396,13 +395,18 @@ display(df_nested_flattened.selectExpr("a", "upper(Country) as UPP_Country"))
 
 # DBTITLE 1,Select observation using sql query
 (df_nested_flattened.write
- #.mode("overwrite")
+ .mode("overwrite")
  .saveAsTable("test_table") 
 )
 
 query_df = spark.sql("SELECT * FROM test_table")
 
 display(query_df)
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC SELECT * FROM test_table
 
 # COMMAND ----------
 
@@ -442,7 +446,7 @@ test_df.write.mode("overwrite").saveAsTable("test_db.test_df")
 # COMMAND ----------
 
 # DBTITLE 1,Save to file
-test_df.write.format("json").save("/tmp/test_df.json")
+test_df.write.format("json").mode("overwrite").save("/tmp/test_df.json")
 
 # COMMAND ----------
 

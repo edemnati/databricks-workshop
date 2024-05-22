@@ -21,6 +21,9 @@
 # MAGIC       - Backlog metrics
 # MAGIC       - Databricks Enhanced Autoscaling events
 # MAGIC       - Runtime information
+# MAGIC   
+# MAGIC   __Prerequisite__:
+# MAGIC   Run pipeline: https://github.com/edemnati/databricks-workshop/blob/main/notebooks/dlt_demo/Delta%20Live%20Tables%20quickstart%20(Python).py
 
 # COMMAND ----------
 
@@ -41,10 +44,10 @@ display(event_log_raw)
 # COMMAND ----------
 
 
-latest_update_id = spark.sql("SELECT origin.update_id FROM event_log_raw WHERE event_type = 'create_update' ORDER BY timestamp DESC LIMIT 1").collect()[0].update_id
+latest_update_id = spark.sql("SELECT origin.update_id FROM event_log_raw WHERE event_type = 'create_update' ORDER BY timestamp DESC LIMIT 2").collect()#[0].update_id
 print(f"latest_update_id:{latest_update_id}")
 
-spark.conf.set('latest_update.id', latest_update_id)
+#spark.conf.set('latest_update.id', latest_update_id)
 
 # COMMAND ----------
 
@@ -92,7 +95,7 @@ spark.conf.set('latest_update.id', latest_update_id)
 # MAGIC       event_log_raw
 # MAGIC     WHERE
 # MAGIC       event_type = 'flow_progress'
-# MAGIC       AND origin.update_id = '${latest_update.id}'
+# MAGIC       AND origin.update_id = '992b7c28-c939-4264-928a-8bd52a483dd7'
 # MAGIC   )
 # MAGIC GROUP BY
 # MAGIC   row_expectations.dataset,
@@ -104,7 +107,7 @@ spark.conf.set('latest_update.id', latest_update_id)
 # MAGIC
 # MAGIC select * from dlt_test_py.clickstream_raw
 # MAGIC where curr_title is null
-# MAGIC limit 10
+# MAGIC limit 50
 
 # COMMAND ----------
 
@@ -140,5 +143,8 @@ spark.conf.set('latest_update.id', latest_update_id)
 # MAGIC   event_log_raw
 # MAGIC WHERE
 # MAGIC   event_type = 'autoscale'
-# MAGIC   AND origin.update_id = '${latest_update.id}'
 # MAGIC order by timestamp
+
+# COMMAND ----------
+
+

@@ -39,7 +39,7 @@
 import requests
 
 #Read data
-URL="https://secure.toronto.ca/cc_sr_v1/data/edc_eventcal_APR?limit=500"
+URL="https://securexx.toronto.ca/cc_sr_v1/data/edc_eventcal_APR?limit=500"
 
 result = requests.get(URL).json()
 

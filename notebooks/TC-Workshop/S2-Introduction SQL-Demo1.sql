@@ -64,9 +64,8 @@
 
 -- COMMAND ----------
 
--- MAGIC %sql
--- MAGIC --SHOW SCHEMAS IN samples
--- MAGIC SHOW TABLES IN samples.tpch
+--SHOW SCHEMAS IN samples
+SHOW TABLES IN samples.tpch
 
 -- COMMAND ----------
 
@@ -80,29 +79,27 @@
 
 -- COMMAND ----------
 
--- MAGIC %sql
--- MAGIC
--- MAGIC --Select and were statements
--- MAGIC SELECT *
--- MAGIC FROM samples.tpch.customer 
--- MAGIC WHERE c_mktsegment in ('BUILDING','FURNITURE')
--- MAGIC LIMIT 100
+
+--Select and were statements
+SELECT *
+FROM samples.tpch.customer 
+WHERE c_mktsegment in ('BUILDING','FURNITURE')
+LIMIT 100
 
 -- COMMAND ----------
 
--- MAGIC %sql
--- MAGIC
--- MAGIC --Join tables and aggregate results.
--- MAGIC SELECT  
--- MAGIC   c_mktsegment,
--- MAGIC   o_orderpriority,
--- MAGIC   o_orderstatus, 
--- MAGIC   sum(o_totalprice) as sum_order_total 
--- MAGIC FROM samples.tpch.orders as o 
--- MAGIC LEFT JOIN samples.tpch.customer as c on c.c_custkey=o.o_custkey
--- MAGIC WHERE c_mktsegment in ('BUILDING','FURNITURE')
--- MAGIC GROUP BY c_mktsegment,o_orderpriority,o_orderstatus
--- MAGIC ORDER BY sum_order_total DESC
+
+--Join tables and aggregate results.
+SELECT  
+  c_mktsegment,
+  o_orderpriority,
+  o_orderstatus, 
+  sum(o_totalprice) as sum_order_total 
+FROM samples.tpch.orders as o 
+LEFT JOIN samples.tpch.customer as c on c.c_custkey=o.o_custkey
+WHERE c_mktsegment in ('BUILDING','FURNITURE')
+GROUP BY c_mktsegment,o_orderpriority,o_orderstatus
+ORDER BY sum_order_total DESC
 
 -- COMMAND ----------
 
@@ -160,12 +157,11 @@
 
 -- COMMAND ----------
 
--- MAGIC %sql
--- MAGIC /* Preview your data */
--- MAGIC SELECT * FROM read_files("dbfs:/mnt/my_lake/NYCTripSmall.parquet") LIMIT 10
--- MAGIC
--- MAGIC -- OR --
--- MAGIC --SELECT * FROM csv.`/mnt/my_lake/data/daily-bike-share.csv`
+/* Preview your data */
+SELECT * FROM read_files("dbfs:/mnt/my_lake/NYCTripSmall.parquet") LIMIT 10
+
+-- OR --
+--SELECT * FROM csv.`/mnt/my_lake/data/daily-bike-share.csv`
 
 -- COMMAND ----------
 
@@ -175,51 +171,46 @@
 -- COMMAND ----------
 
 -- DBTITLE 1,Create test database
--- MAGIC %sql
--- MAGIC --CREATE [SCHEMA|DATABASE] IF NOT EXISTS database_name
--- MAGIC
--- MAGIC CREATE DATABASE IF NOT EXISTS test_db
+--CREATE [SCHEMA|DATABASE] IF NOT EXISTS database_name
+
+CREATE DATABASE IF NOT EXISTS test_db
 
 -- COMMAND ----------
 
--- MAGIC %sql
--- MAGIC -- Create External Table
--- MAGIC
--- MAGIC --Path ADLS nomenclature: abfss://<container>@<storage-account>.dfs.core.windows.net/<folder>
--- MAGIC --DROP TABLE test_db.tbl_daily_bike_share_EXT;
--- MAGIC CREATE TABLE IF NOT EXISTS tbl_daily_bike_share_EXT
--- MAGIC USING CSV
--- MAGIC OPTIONS (path "/mnt/my_lake/data/daily-bike-share.csv",
--- MAGIC 'header' = 'true',
--- MAGIC   'inferSchema' = 'true',
--- MAGIC   'mergeSchema' = 'true')
--- MAGIC ;
--- MAGIC SELECT year,count(*) FROM test_db.tbl_daily_bike_share_EXT
--- MAGIC group by year
--- MAGIC LIMIT 100
--- MAGIC
+-- Create External Table
+
+--Path ADLS nomenclature: abfss://<container>@<storage-account>.dfs.core.windows.net/<folder>
+--DROP TABLE test_db.tbl_daily_bike_share_EXT;
+CREATE TABLE IF NOT EXISTS tbl_daily_bike_share_EXT
+USING CSV
+OPTIONS (path "/mnt/my_lake/data/daily-bike-share.csv",
+'header' = 'true',
+  'inferSchema' = 'true',
+  'mergeSchema' = 'true')
+;
+SELECT year,count(*) FROM test_db.tbl_daily_bike_share_EXT
+group by year
+LIMIT 100
 
 -- COMMAND ----------
 
--- MAGIC %sql
--- MAGIC -- Create Managed Table
--- MAGIC CREATE TABLE IF NOT EXISTS test_db.tbl_daily_bike_share_csv_managed;
--- MAGIC
--- MAGIC COPY INTO test_db.tbl_daily_bike_share_csv_managed
--- MAGIC FROM '/mnt/my_lake2/data/daily-bike-share.csv' 
--- MAGIC FILEFORMAT = CSV
--- MAGIC FORMAT_OPTIONS('header'='true','inferSchema'='True')
--- MAGIC COPY_OPTIONS ('mergeSchema' = 'true');
--- MAGIC ;
--- MAGIC SELECT year,count(*) FROM test_db.tbl_daily_bike_share_csv_managed
--- MAGIC group by year
--- MAGIC LIMIT 100
+-- Create Managed Table
+CREATE TABLE IF NOT EXISTS test_db.tbl_daily_bike_share_csv_managed;
+
+COPY INTO test_db.tbl_daily_bike_share_csv_managed
+FROM '/mnt/my_lake2/data/daily-bike-share.csv' 
+FILEFORMAT = CSV
+FORMAT_OPTIONS('header'='true','inferSchema'='True')
+COPY_OPTIONS ('mergeSchema' = 'true');
+;
+SELECT year,count(*) FROM test_db.tbl_daily_bike_share_csv_managed
+group by year
+LIMIT 100
 
 -- COMMAND ----------
 
--- MAGIC %sql
--- MAGIC --[ EXTENDED | FORMATTED ]
--- MAGIC DESCRIBE TABLE FORMATTED test_db.tbl_daily_bike_share_csv_managed
+--[ EXTENDED | FORMATTED ]
+DESCRIBE TABLE FORMATTED test_db.tbl_daily_bike_share_csv_managed
 
 -- COMMAND ----------
 
@@ -228,14 +219,13 @@
 
 -- COMMAND ----------
 
--- MAGIC %sql
--- MAGIC DROP TABLE IF EXISTS test_db.tbl_daily_bike_share_EXT_2011;
--- MAGIC CREATE TABLE test_db.tbl_daily_bike_share_EXT_2011 
--- MAGIC AS SELECT * FROM test_db.tbl_daily_bike_share_EXT where year=2011;
--- MAGIC
--- MAGIC SELECT year,count(*) FROM test_db.tbl_daily_bike_share_EXT_2011
--- MAGIC group by year
--- MAGIC LIMIT 100
+DROP TABLE IF EXISTS test_db.tbl_daily_bike_share_EXT_2011;
+CREATE TABLE test_db.tbl_daily_bike_share_EXT_2011 
+AS SELECT * FROM test_db.tbl_daily_bike_share_EXT where year=2011;
+
+SELECT year,count(*) FROM test_db.tbl_daily_bike_share_EXT_2011
+group by year
+LIMIT 100
 
 -- COMMAND ----------
 
@@ -245,51 +235,42 @@
 -- COMMAND ----------
 
 -- DBTITLE 1,Select variables
--- MAGIC %sql
--- MAGIC
--- MAGIC --Select distinct values 
--- MAGIC
--- MAGIC SELECT DISTINCT season, holiday
--- MAGIC FROM test_db.tbl_daily_bike_share_csv_managed
--- MAGIC
--- MAGIC
+
+--Select distinct values 
+
+SELECT DISTINCT season, holiday
+FROM test_db.tbl_daily_bike_share_csv_managed
 
 -- COMMAND ----------
 
 -- DBTITLE 1,Filter rows based on conditions
--- MAGIC %sql
--- MAGIC
--- MAGIC SELECT DISTINCT season, holiday
--- MAGIC FROM test_db.tbl_daily_bike_share_csv_managed
--- MAGIC WHERE windspeed<0.19
+
+SELECT DISTINCT season, holiday
+FROM test_db.tbl_daily_bike_share_csv_managed
+WHERE windspeed<0.19
 
 -- COMMAND ----------
 
 -- DBTITLE 1,Count observations per group
--- MAGIC %sql
--- MAGIC --Group and count values
--- MAGIC
--- MAGIC SELECT  season, holiday, count(*) as ct
--- MAGIC FROM test_db.tbl_daily_bike_share_csv_managed
--- MAGIC GROUP BY season, holiday
+--Group and count values
+
+SELECT  season, holiday, count(*) as ct
+FROM test_db.tbl_daily_bike_share_csv_managed
+GROUP BY season, holiday
 
 -- COMMAND ----------
 
 -- DBTITLE 1,Group by variable and apply aggregation functions
--- MAGIC %sql
--- MAGIC
--- MAGIC --Group and agggregate values
--- MAGIC SELECT  mnth, 
--- MAGIC         count(*) as ct,
--- MAGIC         avg(windspeed) as avg_windspeed,
--- MAGIC         median(windspeed) as med_windspeed,
--- MAGIC         sum(rentals) as sum_rentals
--- MAGIC FROM test_db.tbl_daily_bike_share_csv_managed
--- MAGIC GROUP BY mnth
--- MAGIC ORDER BY avg_windspeed DESC
--- MAGIC
--- MAGIC
--- MAGIC
+
+--Group and agggregate values
+SELECT  mnth, 
+        count(*) as ct,
+        avg(windspeed) as avg_windspeed,
+        median(windspeed) as med_windspeed,
+        sum(rentals) as sum_rentals
+FROM test_db.tbl_daily_bike_share_csv_managed
+GROUP BY mnth
+ORDER BY avg_windspeed DESC
 
 -- COMMAND ----------
 
@@ -299,19 +280,17 @@
 -- COMMAND ----------
 
 -- DBTITLE 1,Create managed table from json file
--- MAGIC %sql
--- MAGIC -- Create Managed Table
--- MAGIC DRop table test_db.test_json_array_nested_managed;
--- MAGIC CREATE TABLE IF NOT EXISTS test_db.test_json_array_nested_managed;
--- MAGIC COPY INTO test_db.test_json_array_nested_managed
--- MAGIC FROM '/mnt/my_lake2/data/test_json_array_nested.json' 
--- MAGIC FILEFORMAT = JSON
--- MAGIC COPY_OPTIONS ('mergeSchema' = 'true');
--- MAGIC ;
--- MAGIC
--- MAGIC SELECT * FROM test_db.test_json_array_nested_managed
--- MAGIC LIMIT 100
--- MAGIC
+-- Create Managed Table
+DRop table test_db.test_json_array_nested_managed;
+CREATE TABLE IF NOT EXISTS test_db.test_json_array_nested_managed;
+COPY INTO test_db.test_json_array_nested_managed
+FROM '/mnt/my_lake2/data/test_json_array_nested.json' 
+FILEFORMAT = JSON
+COPY_OPTIONS ('mergeSchema' = 'true');
+;
+
+SELECT * FROM test_db.test_json_array_nested_managed
+LIMIT 100
 
 -- COMMAND ----------
 
@@ -325,50 +304,43 @@ FROM (
 -- COMMAND ----------
 
 -- DBTITLE 1,Flatten table structure
--- MAGIC %sql
--- MAGIC
--- MAGIC --Array
--- MAGIC --Structure 
--- MAGIC
--- MAGIC CREATE TABLE IF NOT EXISTS test_db.test_json_flat_managed
--- MAGIC AS 
--- MAGIC SELECT a,b,c,col.*,upper(col.Country) as UPP_Country
--- MAGIC FROM (
--- MAGIC       SELECT a,b,c,explode(d) as col 
--- MAGIC       FROM test_db.test_json_array_nested_managed
--- MAGIC );
--- MAGIC
--- MAGIC SELECT * FROM test_db.test_json_flat_managed
--- MAGIC LIMIT 100
--- MAGIC
+
+--Array
+--Structure 
+
+CREATE TABLE IF NOT EXISTS test_db.test_json_flat_managed
+AS 
+SELECT a,b,c,col.*,upper(col.Country) as UPP_Country
+FROM (
+      SELECT a,b,c,explode(d) as col 
+      FROM test_db.test_json_array_nested_managed
+);
+
+SELECT * FROM test_db.test_json_flat_managed
+LIMIT 100
 
 -- COMMAND ----------
 
 -- DBTITLE 1,Join tables
--- MAGIC %sql
--- MAGIC
--- MAGIC -- Create Managed Table to join with
--- MAGIC CREATE TABLE IF NOT EXISTS test_db.test_json_managed;
--- MAGIC COPY INTO test_db.test_json_managed
--- MAGIC FROM '/mnt/my_lake2/data/test_json.json' 
--- MAGIC FILEFORMAT = JSON
--- MAGIC COPY_OPTIONS ('mergeSchema' = 'true');
--- MAGIC ;
--- MAGIC
--- MAGIC --Select from joined tables
--- MAGIC SELECT * 
--- MAGIC FROM test_db.test_json_flat_managed as tbl1
--- MAGIC INNER JOIN test_db.test_json_managed tbl2 ON tbl1.a=tbl2.a
--- MAGIC
--- MAGIC
--- MAGIC
+
+-- Create Managed Table to join with
+CREATE TABLE IF NOT EXISTS test_db.test_json_managed;
+COPY INTO test_db.test_json_managed
+FROM '/mnt/my_lake2/data/test_json.json' 
+FILEFORMAT = JSON
+COPY_OPTIONS ('mergeSchema' = 'true');
+;
+
+--Select from joined tables
+SELECT * 
+FROM test_db.test_json_flat_managed as tbl1
+INNER JOIN test_db.test_json_managed tbl2 ON tbl1.a=tbl2.a
 
 -- COMMAND ----------
 
 -- DBTITLE 1,Union tables
--- MAGIC %sql
--- MAGIC SELECT * 
--- MAGIC FROM 
--- MAGIC (SELECT a,b,c FROM test_db.test_json_flat_managed)
--- MAGIC UNION
--- MAGIC (SELECT a,b,c FROM test_db.test_json_managed)
+SELECT * 
+FROM 
+(SELECT a,b,c FROM test_db.test_json_flat_managed)
+UNION
+(SELECT a,b,c FROM test_db.test_json_managed)

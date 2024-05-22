@@ -93,7 +93,7 @@ configs = {
 # Optionally, you can add <directory-name> to the source URI of your mount point.
 dbutils.fs.mount(
   source = "abfss://ez-filesystem@ezmylake.dfs.core.windows.net/",
-  mount_point = "/mnt/my_mount_pass",
+  mount_point = "/mnt/my_mount_pass3",
   extra_configs = configs)
 
 

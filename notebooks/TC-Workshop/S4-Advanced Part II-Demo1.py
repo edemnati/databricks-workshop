@@ -95,6 +95,7 @@ df_readStream = (spark
                  .options(**ehConf)
                 ).load()
 
+
 # COMMAND ----------
 
 # DBTITLE 1,Display streaming events
@@ -144,20 +145,24 @@ ehConf_write['eventhubs.connectionString'] = sc._jvm.org.apache.spark.eventhubs.
           .outputMode("append")
           .options(**ehConf_write)
           .option("checkpointLocation", "dbfs:/FileStore/test_stream_tc/checkpointapievents_delta")
-          .start("dbfs:/FileStore/test_stream_tc/writedata_delta")
+          .start("dbfs:/FileStore/test_stream_tc/writedata_delta_tc")
          )
 
 # COMMAND ----------
 
 # MAGIC %sh
 # MAGIC
-# MAGIC ls -lrth /dbfs/FileStore/test_stream_tc/checkpointapievents_delta
+# MAGIC ls -lrth /dbfs/FileStore/test_stream_tc/writedata_delta_tc
 
 # COMMAND ----------
 
-df_read=spark.read.format("delta").load("dbfs:/FileStore/test_stream_tc/writedata_delta/")
+df_read=spark.read.format("delta").load("dbfs:/FileStore/test_stream_tc/writedata_delta_tc/")
 display(df_read)
 
+
+# COMMAND ----------
+
+df_read.printSchema()
 
 # COMMAND ----------
 
@@ -166,7 +171,7 @@ display(df_read)
 # MAGIC
 # MAGIC DROP TABLE IF EXISTS test_db.test_events_bronze_delta_tc;
 # MAGIC CREATE TABLE IF NOT EXISTS test_db.test_events_bronze_delta_tc
-# MAGIC USING delta LOCATION 'dbfs:/FileStore/test_stream_tc/writedata_delta';
+# MAGIC USING delta LOCATION 'dbfs:/FileStore/test_stream_tc/writedata_delta_tc';
 # MAGIC
 # MAGIC
 # MAGIC --select * from test_db.test_events_bronze;
@@ -185,6 +190,12 @@ display(df_read)
 
 # MAGIC %sql
 # MAGIC
+# MAGIC restore table test_db.test_events_bronze_delta_tc TO TIMESTAMP AS OF '2023-11-22T13:52:20.000+00:00';
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC
 # MAGIC select * from test_db.test_events_bronze_delta_tc
 
 # COMMAND ----------
@@ -198,13 +209,13 @@ display(df_read)
 # MAGIC   - RETAIN num HOURS: The retention threshold.
 # MAGIC   - DRY RUN: Return a list of up to 1000 files to be deleted.
 # MAGIC */
-# MAGIC VACUUM test_db.test_events_bronze --[RETAIN num HOURS] [DRY RUN]
+# MAGIC VACUUM test_db.test_events_bronze_delta_tc --[RETAIN num HOURS] [DRY RUN]
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC
-# MAGIC # Send messages to event hub
+# MAGIC # Send messages to event hub (producer)
 
 # COMMAND ----------
 
@@ -217,7 +228,6 @@ consumer_keyname = "eztesteventhubsas_consumer"
 consumer_secret = dbutils.secrets.get('my-db-secret','eventhubsasconsumer')
 writeConnectionString = f'Endpoint=sb://ez-event-hub-mip.servicebus.windows.net/;SharedAccessKeyName={producer_keyname};SharedAccessKey={producer_secret};EntityPath={eventhub_instance_name}'
 consumer_group = '$Default'
-
 
 
 ehWriteConf = {}
