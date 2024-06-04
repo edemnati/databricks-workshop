@@ -55,6 +55,10 @@ databricks secrets delete-scope --scope <scope-name>
 
 # COMMAND ----------
 
+dbutils.secrets.listScopes()
+
+# COMMAND ----------
+
 #print(dbutils.secrets.listScopes())
 #print(dbutils.secrets.list('my-db-secret'))
 #print(dbutils.secrets.get('my-db-secret','ezmylake-key'))
